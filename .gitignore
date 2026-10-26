@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.playwright-cli/
+output/
+node_modules/
+.venv/
+publication_result.json
+*.vdata
+*.fsp
+*.wafer
+*.zam
+*.stl
+*.obj
+*.mat
+*.npz

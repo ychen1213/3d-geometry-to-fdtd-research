@@ -1,0 +1,139 @@
+<section id="geom-basics">
+<h2>从零认识三维表达：同一根凸起的硅条，为什么会有这么多文件？</h2>
+<p class="lead">先记住一个问题：<strong>程序读完文件以后，究竟知道了哪些位置是硅、哪些位置是空气，以及两者的分界在哪里？</strong>文件能旋转、看起来光滑、后缀叫“3D”，都不能单独回答这个问题。本章用“硅基底上凸起的一根条纹”贯穿说明。条纹四周被刻蚀，顶部保留，侧壁可以倾斜、圆滑或有粗糙度；示意图为作者自主绘制的概念模型，并非 AH53 实测形貌。</p>
+
+<h3 id="geom-four-layers">先分清四层：形状、文件、材料和计算网格</h3>
+<p><strong>几何表示</strong>决定怎样记录形状：例如用三角形包围硅的外表面，或把空间切成小格并记录每格的材料。<strong>文件格式与编码</strong>决定把这些记录怎样写进磁盘：文本、二进制、压缩、分块以及字段命名。<strong>物理材料</strong>决定硅怎样响应光场：介电函数、色散、吸收等。<strong>求解离散</strong>决定电磁方程在哪些位置、以什么未知量计算。它们会互相配合，但不能用其中一层替代其他层。</p>
+<figure><img src="assets/geom_layers.svg" alt="四层关系示意：几何表示、文件编码、材料模型和电磁求解离散分别承担不同任务" loading="lazy"><figcaption>同一份表面几何可以装进不同容器，也可以生成不同计算网格。文件格式并不直接决定时间步进算法。</figcaption></figure>
+<p>例如，STL 里的三角形描述的是物体表面；Lumerical 把它导入为 planar solid 几何对象。给这个对象指定“硅”的光学材料，才完成物理赋值。另一方面，HDF5 是组织数组、属性与分块数据的容器；里面既能放体素，也能放顶点表和三角形索引。因此，“STL 对 HDF5”不能直接等同于“表面网格对体素”。<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys：STL 导入</a>；<a href="https://portal.hdfgroup.org/documentation/hdf5/latest/hdf5_chunking.html">HDF Group：分块数据布局</a>。</p>
+<p>记事本里看到英文、数字或长串编码，只说明外层写法。英文标签下面可能放着压缩后的数组；二进制三角形也不一定能直接读出坐标。反过来，一份能读懂的文本文件仍可能记录数千万个元素。判断文件内容，需要格式说明、可靠读取器和解码后的字段，不能靠文件大小或后缀猜测。<strong>“无损解压”只保证还原编码前的记录，不保证这些记录完整表达了真实工艺表面。</strong></p>
+
+<h3 id="geom-coordinates">坐标和单位：最容易制造“假精度”的地方</h3>
+<p>本章约定 X、Y 在晶圆平面内，Z 沿高度。一个坐标数值“0.3”必须说明单位：0.3 µm 是 300 nm，0.3 m 则完全不同。还要说明原点在晶圆中心、裁剪盒角点还是物体中心，以及文件使用哪个轴表示高度。STL 没有标准长度单位；Lumerical 的默认解释是微米，导入时可改变缩放。glTF 则规定长度使用米和右手坐标系。由此可见，格式不同，单位约定也可能不同。<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys：长度单位说明</a>；<a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units">Khronos：glTF 坐标与单位</a>。</p>
+<p>对我们的课题，一份几何必须同时带上<strong>单位、轴顺序、原点、局部到全局的变换、材料编号表和来源</strong>。假设几何采样间距为 20 nm，把格心误当格角，就可能整体移动 10 nm；这已经等于本次重点研究的测量偏差档位。坐标写了很多小数，也只代表数字表达能力，不能证明来源模型具有同等物理精度。</p>
+</section>
+
+<section id="geom-surfaces">
+<h2>只记录表面：点云、三角网格与 CAD 曲面</h2>
+<h3 id="geom-point-cloud">点云：知道一些表面点，不一定知道点之间是什么</h3>
+<p>点云可想成拿探针测出一批位置：每条记录是一个 <code>(x,y,z)</code>，还可以附带法向、颜色或测量置信度。对凸硅条，扫描到的顶部点与侧壁点能够勾勒轮廓，但点云本身通常不告诉程序“哪些点应当连接”“下面有没有空腔”。从点云得到封闭实体，要额外做表面重建，并决定如何处理缺测区域、噪声和孔洞。Stanford 的扫描数据说明也特意区分原始测量与已经去噪、融合后的重建网格。<a href="https://graphics.stanford.edu/data/3Dscanrep/">Stanford：扫描与表面重建说明</a>。</p>
+<p>数量级例子：一百万个点，仅用三个 float32 坐标就需要 12 MB；加上三个法向分量再加 12 MB。这是自行计算的数组下限，不含索引和容器开销。点云适合接收测量数据或检查表面，作为自研电磁程序的直接输入则需要补齐内部材料判定。对已有工艺实体，先删掉连接关系变成点云，通常会增加一次不必要的重建。</p>
+
+<h3 id="geom-triangle-mesh">三角网格：用一张有折痕的薄壳包住实体</h3>
+<p>三角网格保存顶点和“哪三个顶点组成一片面”。三点确定一个平面，把许多小面拼起来，就能近似侧壁弯曲和圆角。对于一个无圆角的理想长方体，8 个顶点、12 个三角形已经足够；粗糙表面才需要更多面。它在三维空间中，但每片三角形是没有厚度的二维面。封闭且方向一致的外壳，加上内部材料定义，才能用于表示硅实体。孔洞、自相交、重复面和错误方向会让内部判定变得不可靠；CGAL 为这些检查和点的内外判定提供了独立算法。<a href="https://doc.cgal.org/latest/Polygon_mesh_processing/index.html">CGAL：Polygon Mesh Processing</a>。</p>
+<p>三角形内部的坐标是连续的，可以把整根硅条平移 3 nm，而不要求移动一个整数格。它仍然是<strong>分片平面</strong>，弯曲表面的法向会在三角形边处变化。显示程序能把顶点法向插值，使明暗看起来更平滑，但这种着色不会自动移动三角形，也不会恢复几何曲率。<a href="https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes">PBRT：三角网格与着色法向</a>。</p>
+<div class="table-wrap"><table><thead><tr><th>格式</th><th>通常装什么</th><th>对本课题的重要限制</th></tr></thead><tbody>
+<tr><td>STL</td><td>三角面逐片列出，ASCII 或二进制</td><td>缺少标准单位和完整材料语义；本流程用旁附清单补充。</td></tr>
+<tr><td>OBJ + MTL</td><td>顶点表、面索引、对象/材料分组，可附法向与纹理</td><td>材质名称能用于映射，MTL 的显示参数通常不够描述光学色散；原规范也有自由曲面语法，不能说所有 OBJ 只能存三角形。</td></tr>
+<tr><td>PLY</td><td>顶点和面及其属性，常用于扫描与网格交换</td><td>能携带颜色等属性不等于已有硅的电磁材料模型；不同读取器支持的属性不同。</td></tr>
+<tr><td>glTF / GLB</td><td>网格、场景、变换、显示材质与纹理；GLB 可统一封装二进制资源</td><td>PBR 材质服务于显示，不能直接当作 FDTD 的 ε(ω)。适合教程展示与交互审阅。</td></tr>
+</tbody></table></div>
+<p class="source">表中格式依据：<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys STL</a>、<a href="https://www.paulbourke.net/dataformats/obj/">Wavefront 原始 OBJ 规范存档</a>、<a href="https://dirsig.cis.rit.edu/docs/new/obj.html">DIRSIG 官方 OBJ 与材料映射说明</a>、<a href="https://vtk.org/doc/nightly/html/classvtkPLYReader.html">VTK PLY 读取器</a>、<a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html">Khronos glTF 规范</a>。这些格式携带几何属性的能力，不保证每个应用都会完整读取。</p>
+<p>二进制 STL 常规布局为 84 字节头部，加每三角形 50 字节：法向 3 个 float32、三顶点共 9 个 float32，再加 2 字节属性字段。于是 100 万片约 50 MB。STL 重复写入共享顶点；如果改成“顶点表 + 三角索引”，且顶点和索引均为 32 位，则裸数组大小是 <code>12V + 12F</code> 字节。对近似 <code>V≈F/2</code> 的常见大闭合三角网格，100 万片约 18 MB；不含法向、BVH、材料和容器。这是组织方式不同带来的节省，尚未减掉任何面。<a href="https://raw.githubusercontent.com/Kitware/VTK/master/IO/Geometry/vtkSTLWriter.cxx">VTK 二进制 STL 写入实现</a>；<a href="https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes">PBRT：共享顶点与索引结构</a>。</p>
+
+<h3 id="geom-cad">CAD 的 B-Rep / NURBS / STEP：用曲面公式和连接关系记录边界</h3>
+<p>B-Rep 是 boundary representation，即边界表示。数学几何告诉程序每张面是平面、圆柱面或样条曲面；拓扑告诉程序面如何通过边、顶点连接成闭合壳与实体。NURBS 是一类由控制点、权重和节点参数定义的曲线/曲面表达；控制点不是把表面全部采样一遍，而是共同确定一张参数曲面。对理想硅条和规则圆角，用少量面和参数就能很紧凑地表示边界。<a href="https://www.occt3d.com/dev/doc/overview/html/index.html">Open CASCADE：B-Rep、几何与拓扑</a>；<a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__modeling_data.html">Open CASCADE：曲线曲面建模</a>。</p>
+<p>STEP 是工程数据交换标准体系，常见文件可以携带这类几何、拓扑、装配和属性；它并非“更高精度 STL”的同义词。把已经三角化的粗糙条纹转成 STEP，可能只是把每个三角形包装成一张 CAD 面，也可能通过拟合生成新的曲面；后者需要容差并会改变形状。Open CASCADE 的 STEP 转换器区分几何拓扑转换与名称、颜色等扩展数据转换，这也说明“保存为 STEP”没有自动补齐全部物理语义。<a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__step.html">Open CASCADE：STEP Translator</a>。</p>
+<p>因此，CAD 很适合设计几何和规则参数扫描；面对带有随机粗糙、微沟槽和复杂再沉积的工艺结果，强行拟合少量光滑 CAD 面可能把研究对象本身抹掉。拟合得足够细也可能导致大量曲面片，失去体积优势。是否有利，取决于表面能否由少量可靠参数描述，而不是扩展名是否“高级”。</p>
+
+<h3 id="geom-csg">CSG：保存“怎样组合出来”，而非逐点列出表面</h3>
+<p>CSG 是 constructive solid geometry，可理解为积木加布尔运算。比如“基底长方体 ∪ 顶部硅条”，或者“完整硅块 − 两侧刻蚀槽”。文件保存积木尺寸、位置以及并、交、差关系；程序按这棵表达式树判断一个位置是否属于硅。OpenSCAD 的基本体和布尔操作就是直观实例。<a href="https://openscad.org/cheatsheet/">OpenSCAD 官方语法表</a>。</p>
+<p>规则结构只需少量参数，变宽、变高、位移扫描很方便。但“刻蚀深度 300 nm”不能唯一确定真实侧壁与粗糙度；用三个理想长方体重新搭出来，不能声称保留了原 VDATA 的工艺结果。把复杂结果替换成 CSG，应被视为明确的物理简化，并比较位置读数变化。</p>
+</section>
+
+<section id="geom-volumes">
+<h2>记录空间内部：体素、占比与稀疏结构</h2>
+<h3 id="geom-voxel">规则体素：把三维空间变成可索引的数组</h3>
+<p>把一块空间沿 X、Y、Z 各切成许多小格，就得到体素。数组 <code>M[i,j,k]</code> 可以保存材料编号，例如 0 为空气、1 为硅。单位、格距、原点和轴顺序说明这个索引对应哪里。均匀格距不必是立方体，允许 <code>dx、dy、dz</code> 不同；非均匀直角网格则要给出每个方向的坐标。VTK 明确区分 structured points、rectilinear grid 和 unstructured grid 等数据组织。<a href="https://docs.vtk.org/en/v9.5.2/design_documents/VTKFileFormats.html">VTK：数据集与属性格式</a>。</p>
+<figure><img src="assets/geom_boundary.svg" alt="同一个凸起硅条的剖面分别以点云、显式边界、二值体素、占比和符号距离表达" loading="lazy"><figcaption>为了看清界面，图中画的是三维结构的一张 X–Z 剖面。各种表示存储的信息不同，不能只按外观决定哪种更准确。</figcaption></figure>
+<p>若 <code>N=NxNyNz</code>，uint8 材料标签占 N 字节，一个 float32 数组占 4N 字节。例如 1000³ 个体素的标签是 1 GB，占比是 4 GB；多种材料分别保存全尺寸 float32 掩模时还会继续相乘。二值数据理论上能按位存储，使 1000³ 个值约为 125 MB，但实际数组库常用一字节或更多；压缩文件的大小又是另一回事。这些数字只说明几何数组，不是完整电磁求解内存。</p>
+<p><strong>体素不必意味着每个格子都是一个实心积木。</strong>标签可表示格心采样，数值可表示格内平均占比，也可表示节点上的标量场。这三种语义不同。若数据确实表示“格内材料恒定”，边界就在格面；若数据是节点采样，再通过插值定义边界，则边界可以穿过格子内部。记录位置和插值规则必须写明。</p>
+
+<h3 id="geom-fractions">体积分数：知道“有多少硅”，还不等于知道“硅在哪里”</h3>
+<p>设某格硅占比 <code>fSi=0.3</code>，意思是格体积的 30% 属于硅。相比把整格判为硅或空气，占比保留了边界附近的部分信息。但一个立方格里 50% 的硅可以占左半、下半或斜切的一半；三个结构体积相同、界面方向却不同。<strong>单个占比不能唯一确定界面法向、位置分布和微小孔洞。</strong>这是几何上的信息不足，不是换一个压缩算法就能消除的。</p>
+<figure><img src="assets/geom_fraction.svg" alt="同为50%硅占比的三个格子分别左半、下半和斜切填充，说明体积分数不能唯一确定界面" loading="lazy"><figcaption>相同的 50% 不能区分三种界面；图为二维截面，沿纸面法向挤出后就是对应的三维反例。</figcaption></figure>
+<p>更丰富的边界记录可以包含局部平面 <code>n·x=d</code>，其中 n 决定朝向，d 决定位置；也可以保存网格边与界面的交点及法向。已知这些信息时，重建器不必只靠邻域占比猜测。Dual Contouring 的原始方法使用的 Hermite 数据正是交点与法向，利用这些约束构造表面。<a href="https://www.cse.wustl.edu/~taoju/research/dualContour.pdf">Ju 等：Dual Contouring of Hermite Data</a>。</p>
+<p>不过，一格内可能同时存在多个界面或三个以上材料，一个平面仍不足以完整表示。占比也不能直接当折射率：30% 硅与 70% 空气怎样影响不同电场方向，涉及界面边界条件、材料色散与求解离散。这里先保留几何信息，后文再决定怎样形成电磁更新系数。</p>
+
+<h3 id="geom-sampling">格心、格角和边：同一个数组形状，可能指向不同位置</h3>
+<p>若 x0 表示左侧格界，则第 i 格中心是 <code>x0+(i+1/2)dx</code>，格界是 <code>x0+i·dx</code>。N 个格子需要 N+1 个格界坐标。若 x0 本来表示第一个采样点，就不应再加半格。节点值也不是单元平均值：线性插值两个节点的值，可以定义中间场值；把一个单元平均占比直接当节点值，会改变数学问题。VTK 因此分别用 POINT_DATA 与 CELL_DATA 关联点和单元属性。<a href="https://docs.vtk.org/en/v9.5.2/design_documents/VTKFileFormats.html">VTK：点数据与单元数据</a>。</p>
+<p>这件事对 10 nm 位置研究尤其直接：20 nm 的数据如果错位半格，几何本身就平移 10 nm。正确读取轴顺序、原点和采样位置，通常比先讨论复杂减面算法更优先。几何标签在格心，而电磁场分量分布在交错位置时，还需要求解器自己的映射规则。</p>
+
+<h3 id="geom-sparse">稀疏体素、RLE、分块与八叉树：少写重复内容</h3>
+<p>如果一列有连续 500 个硅标签，可以保存“硅，重复 500 次”，而不是 500 个相同数字；这是游程编码 RLE 的基本想法。它对层状、长连续区域有效，对随机交错值可能没有优势。分块结构则把空间切成小砖块：纯硅、纯空气的块只存一个常数，界面附近的复杂块才展开。八叉树把一个立方区域逐级分为八个子区域，允许均匀区域停在粗层级、复杂区域继续细分。原始 GPU 稀疏体素化研究就利用粗内部/外部与细边界来减少存储。<a href="https://michael-schwarz.com/research/publ/2010/vox/">Schwarz 与 Seidel：Surface and Solid Voxelization</a>。</p>
+<p>这种节省可以是无损的：若一块所有细格都恰好相同，用一个常数代表它，不会丢掉标签。若把“差不多相同”也合并，则引入近似。树还需要节点、索引与遍历开销，数据越零碎越不一定划算。<strong>几何在空气中稀疏，不代表空气中的电磁场可以删掉。</strong>这里减少的是材料描述；要减少实际场更新区域，还需要改变求解算法与边界处理。</p>
+<p>OpenVDB 是成熟的稀疏体数据结构，树、空间变换和元数据彼此分离，适合保存稀疏标量与窄带距离场。它不是简单“每节点只有八个孩子”的普通八叉树，也不是读入后自动变成自适应 FDTD。NanoVDB 把相关结构组织为连续、适合 CPU/GPU 访问的布局。当前官方 FAQ 的精确限制是<strong>树拓扑静态，值可以修改</strong>；不宜笼统写成“所有内容都只读”。<a href="https://www.openvdb.org/documentation/doxygen/overview.html">OpenVDB Overview</a>；<a href="https://www.openvdb.org/documentation/doxygen/NanoVDB_FAQ.html">NanoVDB FAQ</a>。</p>
+<p>对我们的用途，可先采用“压缩存储、按块读取、仅在界面块执行昂贵求交”的方式节省预处理内存，再输出求解器实际需要的数组。这样能把存储优化与数值算法分别验证；未经测试，不能把一个体素库的 GPU 友好宣传换算成 FDTD 加速倍数。</p>
+</section>
+
+<section id="geom-implicit">
+<h2>用函数、界面高度或体单元表示结构</h2>
+<h3 id="geom-sdf">隐式函数、SDF 与 Level Set：通过数值回答“离边界多远”</h3>
+<p>隐式表示不逐片列出边界，而定义一个函数 <code>φ(x,y,z)</code>。本章约定 φ&lt;0 为硅内部，φ&gt;0 为空气，φ=0 就是边界。如果 |φ| 还等于到最近表面的距离，它就是 signed distance function，符号距离函数，简称 SDF。例如平面 z=z0 的距离函数是 <code>φ=z−z0</code>。曲面可以由公式定义，也可把函数采样到体素或稀疏树中。Level Set 方法用这样的等值面描述随时间运动的界面；函数不必处处是严格距离函数。<a href="https://physbam.stanford.edu/~fedkiw/papers/cam2000-08.pdf">Osher 与 Fedkiw：Level Set Methods</a>。</p>
+<p>它适合求内外、距离、近界面法向以及形状组合。与只存 0/1 相比，距离值提供了更多局部位置线索；但从二值体素算出的 SDF，描述的是该二值结构的距离，不能恢复被二值化丢掉的真实圆角。若用全空间 float32 存 SDF，大小与其他同尺寸 float32 数组相同。窄带 SDF 只在界面附近存真实距离，远处以常数和符号代替，能节省空间；代价是远处不再提供完整距离。<a href="https://www.openvdb.org/documentation/doxygen/overview.html">OpenVDB：窄带 Level Set 的三类区域</a>。</p>
+
+<h3 id="geom-heightfield">高度图和多层界面：适合受限制的三维几何</h3>
+<p>若每个 (x,y) 位置只需要一个表面高度 <code>h(x,y)</code>，硅从底部一直填到该高度，那么二维数组就能定义三维实体。这叫高度场或常说的 2.5D 表示。比如把顶部 500 nm、刻蚀区 200 nm 以及平滑过渡写成高度函数。800×1400 个 float32 高度仅 4.48 MB，而再乘 50 个 Z 层的同类型三维数组是 224 MB；这是按元素数自行计算的 50 倍差异。</p>
+<p>这种紧凑来自强假设：一条竖线最多遇到一个顶界面。倒扣、悬垂、内部孔洞或一列中分离的再沉积颗粒不能由单一高度描述；严格竖直侧壁也需要对不连续高度额外约定连接方式。多层界面可存 <code>h1(x,y)、h2(x,y)…</code>，再给相邻层之间指定材料，适合顺序稳定的膜层。若某层消失、相互穿越或形成复杂拓扑，必须增加规则。这是由函数定义直接得到的适用边界。</p>
+<p>因此，高度场可能是我们条纹模型很经济的专用表示，但需要先检查真实工艺结果能否满足假设。不能因为画面从上方看很规整，就丢掉地下或侧壁的多值结构。Gmsh 的 terrain 与 hybrid model 示例展示了高度/离散表面与三维体网格衔接的实际路线。<a href="https://gmsh.info/doc/texinfo/gmsh.html#x2">Gmsh：地形、离散实体与混合模型</a>。</p>
+
+<h3 id="geom-volume-mesh">四面体、六面体体网格：不仅围住表面，还把内部切开</h3>
+<p>四面体有四个顶点和四张三角面；许多四面体可以填满硅和空气。六面体像可以变形的小盒子；规则体素可以看成一种特殊几何排列，但一般六面体网格并不等同于规则数组。体网格除节点坐标外，还要记录每个单元连哪些节点、材料和邻接关系。Gmsh 的体划分可以生成四面体、棱柱、六面体等单元，并把边界表面与体单元连接起来。<a href="https://gmsh.info/doc/texinfo/gmsh.html#Mesh-module">Gmsh：Mesh module</a>。</p>
+<p>数量级例子：100 万个线性四面体，仅四个 uint32 顶点索引就需 16 MB，另加节点坐标、材料、边/面连接及每单元未知量。网格能沿曲面局部细化，但电磁求解不只取决于“单元个数”。有限元 FEM 用单元上的基函数近似场；间断 Galerkin 类方法允许单元间的场表示间断，通过数值通量耦合；经典 Yee FDTD 则使用规则交错网格上的差分更新。三者的存储和时间步机制不同。<a href="https://mfem.org/electromagnetics/">MFEM：电磁有限元应用</a>；<a href="https://mfem.org/examples/">MFEM：有限元与 DG 示例</a>。</p>
+<p><strong>把 STL 变成四面体文件，不能让现有 Yee 更新公式直接在四面体上工作。</strong>这通常意味着新求解器路线或额外重采样。表面三角形与体四面体在屏幕上都带很多线，但作用完全不同。后文比较自研架构时，将把这类内核改变与“增加一个文件读取器”分别估算。</p>
+
+<h3 id="geom-neural">神经隐式、NeRF 与 3D Gaussian：名字里的“三维”不保证适合电磁计算</h3>
+<p>神经隐式表示把几何函数存在网络权重里。DeepSDF 输入空间坐标、输出带符号距离，因此概念上能回答几何问题；它仍有训练、查询和近似误差，若要给出纳米级界面保证，需要独立验证。NeRF 的经典任务是从视角与空间位置输出辐射亮度和体密度，用照片训练新视角成像；这套密度不是已经标定的硅介电函数。<a href="https://arxiv.org/abs/1901.05103">Park 等：DeepSDF</a>；<a href="https://www.matthewtancik.com/nerf">Mildenhall 等：NeRF 原始项目</a>。</p>
+<p>3D Gaussian Splatting 用一组有位置、尺度与方向等参数的三维高斯表示场景，重点是快速合成图像。视觉重建成功，不保证得到封闭材料边界、内部膜层和波长相关复介电函数。已有可靠工艺几何时，再训练这些表达会多出一层近似和验证成本。因此本报告把它们列为将来有明确压缩或反演需求时的候选，不作为首版电磁输入优先路线。这个优先级判断是针对我们课题的工程推论。<a href="https://arxiv.org/abs/2308.04079">Kerbl 等：3D Gaussian Splatting 原论文</a>。</p>
+</section>
+
+<section id="geom-conversions">
+<h2>转换算法究竟改了什么：表面提取、体素化与减面</h2>
+<h3 id="geom-marching-cubes">Marching Cubes：从一个标量场里找出等值面</h3>
+<p>想象在一个小立方格的八个角上各有数值。先选阈值 t，例如 0.5；判断哪些角高于 t，哪些低于 t。若一条格边两端跨过阈值，就按两端数值插值，估计交点；再把交点连成三角形。遍历所有格子，就得到一张表面。这就是 Marching Cubes 的基本思路。它生成的是<strong>输入标量场在指定解释下的等值面</strong>，不是直接测得的物理表面。<a href="https://www.cs.toronto.edu/~jacobson/seminar/lorenson-and-cline-1987.pdf">Lorensen 与 Cline：Marching Cubes，1987</a>。</p>
+<p>自算一维例子：两个采样点相距 20 nm，数值是 0.2 与 0.8，0.5 交点在线段正中；若变成 0.4 与 0.8，交点在前四分之一，即距第一个点 5 nm。算法能产生小于原采样间距的顶点移动，但这里的“5 nm”来自插值假设，不能当成源数据已经测到了 5 nm 细节。对单元占比使用同样处理时，更要说明平均值怎样转换为节点场。</p>
+<p>普通查表还可能遇到同样角点正负配置对应不同连接方式的歧义。Lewiner 等方法研究了这些情况的拓扑处理；所谓拓扑保证必须理解为对特定插值模型和实现条件的保证，不能扩展成“真实工艺没有丢信息”。如果可靠界面交点和法向已经存在，Dual Contouring 是另一条可利用更丰富信息的路线；是否优于 MC，要看源数据和实现质量。<a href="https://thomas.lewiner.org/pub/marching_cubes_jgt.html">Lewiner 等：拓扑一致的 MC 实现</a>；<a href="https://www.cse.wustl.edu/~taoju/research/dualContour.pdf">Ju 等：Dual Contouring</a>。</p>
+
+<h3 id="geom-voxelization">Voxelization：把一个实体重新投到空间格子里</h3>
+<p>体素化是反方向的问题：给定封闭三角网格，决定哪些格子属于物体。<strong>中心点采样</strong>只问格心在不在硅里，快但可能漏掉细薄结构；<strong>保守表面体素化</strong>把所有被三角面碰到的格子标记出来，适合不漏表面的检测，但若把这些整格都当实心，会使物体变厚；<strong>占比计算</strong>求硅与格子的相交体积，信息更多，但计算更贵。它们回答的问题不同，不能混用同一个“体素化精度”数字。<a href="https://michael-schwarz.com/research/publ/2010/vox/">Schwarz 与 Seidel：表面、实体与稀疏体素化</a>。</p>
+<p>用每格多个子采样点估计占比，是便于实现的近似；用几何裁剪求交体积则更直接，仍受浮点、退化相交、多材料一致性等问题影响。“表面 → 体素 → 表面”一般不会回到完全相同的网格，因为两次转换可能各自加入采样和插值。验证应该同时比较边界位置、材料体积与最终光学读数。</p>
+
+<h3 id="geom-bvh">BVH：加速寻找相关三角形，不改动几何</h3>
+<p>若有十万片三角形和上千万查询位置，逐一比较非常昂贵。BVH 把三角形按空间位置分组，每组用一个包围盒罩住；包围盒再分组形成树。查询射线或格子不碰某个大盒，就跳过盒内全部三角形。它像目录索引，使程序更快找到相关面，本身不需要把边界变粗。代价是建立树的时间与额外内存。<a href="https://www.pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies">PBRT：Bounding Volume Hierarchies</a>。</p>
+<p>CGAL 的 AABB Tree 提供相交、射线与最近点查询，可作为自研几何预处理的候选。BVH 通常改善实际性能，但极端重叠和退化形状仍可能使查询昂贵，不应承诺每次查询都严格 O(log F)。建好的几何加速结构可以在多次划网格时复用；它不能自动减少电磁场数组大小。<a href="https://doc.cgal.org/latest/AABB_tree/">CGAL：AABB Tree</a>。</p>
+
+<h3 id="geom-qem">QEM 减面：挑选“代价较小”的边合并</h3>
+<p>设两相邻顶点 A、B 合并为一个新顶点 C，周围若干小三角形就会消失或改变。如何选择 C？经典 QEM 把相关三角形所在平面当作约束，累加 C 到这些平面的平方距离，优先执行代价较小的合并。它因此通常先压缩近共面的冗余区域，在曲率和尖角附近保留更多面；实际行为还取决于边界约束、权重与实现。<a href="https://www.cs.cmu.edu/~garland/Papers/quadrics.pdf">Garland 与 Heckbert：Quadric Error Metrics，1997</a>。</p>
+<p><strong>“减少 45% 的面”是数量目标，不是误差上限。</strong>QEM 的局部代价也不等于两表面最大距离，更不是对准位置偏差。随机采样点测到的最大距离，仍可能漏掉未采样的小尖峰。Hausdorff 距离要求考察两个集合中所有点到另一集合的最近距离，再取双向最大；有保证的近似算法或保守包络约束，比“抽几个点很接近”更适合给出边界界限。CGAL 提供包络过滤等额外约束，但这些是附加机制，不能自动归给任何 QEM 实现。<a href="https://doc.cgal.org/latest/Surface_mesh_simplification/index.html">CGAL：减面代价与包络约束</a>；<a href="https://doc.cgal.org/latest/Polygon_mesh_processing/index.html">CGAL：Hausdorff 距离功能</a>。</p>
+<p>对多材料结构，两个材料共享的界面应当由同一份几何约束管理。各材料分别减面，可能出现缝隙或互相重叠；尖端、薄膜和狭缝也需要保护。对研究粗糙度造成的测量偏差的任务，删除一个视觉上不起眼的小起伏，仍可能改变相位或散射。因此减面必须与测量算法的结果一起验证。</p>
+
+<h3 id="geom-compression">六种“变小”要分别看待</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>是否必然改变几何</th><th>实际节省什么</th><th>验证重点</th></tr></thead><tbody>
+<tr><td>无损压缩，如 gzip / 无损 HDF5 filter</td><td>不改变还原后的记录</td><td>磁盘、传输；分块读取时可降低预处理峰值</td><td>解压后数组/字节一致；确认使用的滤镜确实无损</td></tr>
+<tr><td>共享顶点、索引化</td><td>精确重复坐标和完整属性处理正确时不改变</td><td>重复坐标与部分拓扑存储</td><td>保留材料边界、法向等必要属性；容差合并另算近似</td></tr>
+<tr><td>严格共面多边形合并</td><td>满足共面、边界与拓扑条件时可保持同一表面</td><td>面数与连接信息</td><td>近共面容差、孔洞、凹多边形，以及后续是否又三角化</td></tr>
+<tr><td>量化 / float32→float16</td><td>通常会改变数值</td><td>每个坐标或标量的字节数</td><td>坐标范围、量化步长、局部原点、界面位移</td></tr>
+<tr><td>QEM 减面</td><td>通常改变分片平面边界</td><td>顶点、面、显示与求交成本</td><td>双向边界误差、体积、特征与位置读数</td></tr>
+<tr><td>平滑 / 曲面拟合</td><td>改变形状</td><td>主要改变频谱与外观，未必减小文件</td><td>真实粗糙是否被去掉、形状收缩与系统偏差</td></tr>
+</tbody></table></div>
+<p>表中“保持不变”都有前提。例如按某个容差合并近邻点，就已经允许坐标或连接改变；三角形顶点坐标一样，显示法向也不一定能合并。HDF5 的分块与压缩可以组合，但读出一个块时通常需要处理整块，块大小会影响内存和读取速度；h5py 也明确区分无损压缩和有损 scale-offset 等滤镜。<a href="https://docs.h5py.org/en/stable/high/dataset.html">h5py：分块、压缩与 scale-offset</a>。</p>
+<p>自行推导一个可核验的量化例子：若每轴坐标都舍入到间隔 q 的网格，单轴误差至多 q/2，单顶点欧氏位移至多 √3q/2；这不是全表面的拓扑、体积或电磁误差保证。若 q=1 nm，顶点界限约 0.866 nm，但多个点合并、薄层塌缩或重新三角化仍需额外检查。一个“小于 1 nm 的坐标误差”也不能直接宣布满足 10 nm 的最终位置指标。</p>
+</section>
+
+<section id="geom-comparison">
+<h2>把表示方法放到同一张表里</h2>
+<p>下表是依据上述定义和来源形成的工程比较，讨论的是<strong>可靠输入与预处理</strong>，不直接承诺时间步进加速。N 为展开体素数，V 为顶点数，F 为面数，B 为实际展开的稀疏块数，P 为参数或网络权重数。实际文件还会有元数据、压缩和索引开销。</p>
+<div class="table-wrap"><table><thead><tr><th>表示</th><th>主要记录量</th><th>边界怎样确定</th><th>材料怎样指定</th><th>适合我们什么环节</th><th>主要代价或风险</th></tr></thead><tbody>
+<tr><td>点云</td><td>O(点数)</td><td>只有采样点，通常要重建</td><td>点属性不自动给出体内部</td><td>测量导入、表面比较</td><td>缺测和重建歧义</td></tr>
+<tr><td>三角/多边形表面</td><td>O(V+F)</td><td>显式分片面</td><td>封闭区域或共享界面标签</td><td>工艺结果交换、重划网格、连续刚体变换</td><td>有效实体检查、曲面近似与求交预处理</td></tr>
+<tr><td>CAD B-Rep / CSG</td><td>取决于面片或参数数</td><td>曲面公式、裁剪边与布尔关系</td><td>实体/区域绑定材料</td><td>理想基准、规则参数扫描</td><td>复杂粗糙工艺难以紧凑拟合</td></tr>
+<tr><td>密集材料标签</td><td>O(N)</td><td>由格值语义与插值规则定义</td><td>每格编号直接映射</td><td>简单读取、规则数据处理</td><td>展开体积大；硬标签可能丢界面位置</td></tr>
+<tr><td>占比 + 界面信息</td><td>O(N) 或仅边界存附加量</td><td>占比结合平面/交点重建</td><td>每材料占比及界面两侧编号</td><td>保留工艺边界信息、亚网格预处理候选</td><td>需要真实可用的源字段与一致重建算法</td></tr>
+<tr><td>稀疏块 / 树</td><td>O(B) 加树开销</td><td>取决于树中装的是标签、占比还是 SDF</td><td>常数区域与细格属性</td><td>减少几何存储、分块查询</td><td>遍历开销；不等于稀疏场求解</td></tr>
+<tr><td>解析/采样 SDF</td><td>O(P)、O(N) 或窄带规模</td><td>φ=0</td><td>符号与区域映射</td><td>距离、法向、隐式查询</td><td>采样与重初始化误差、多材料表达</td></tr>
+<tr><td>高度场 / 多层界面</td><td>O(NxNy×层数)</td><td>一层或多层高度函数</td><td>高度区间绑定材料</td><td>经检查符合假设的条纹/膜层</td><td>不能任意表示悬垂、孔洞与拓扑变化</td></tr>
+<tr><td>四面体/六面体体网格</td><td>O(节点+单元+连接)</td><td>体单元与边界面共同定义</td><td>单元或区域属性</td><td>FEM/DG 等独立求解路线</td><td>生成与质量控制；不能直接套用 Yee 内核</td></tr>
+<tr><td>神经隐式 / 辐射场</td><td>O(P) 加推理成本</td><td>SDF 可隐式定义；辐射场需另外提取</td><td>必须另行建立物理语义</td><td>未来压缩/反演研究</td><td>训练与误差保证成本，显示目标与电磁目标不同</td></tr>
+</tbody></table></div>
+<p>阅读后续实测时，应始终追问三件事：<strong>来源已经知道了什么；转换额外假设了什么；求解器实际使用了什么。</strong>一份源模型可以同时保留原始体素、用于交换的三角面和用于求解的材料系数缓存。它们承担不同任务，不需要让一个文件包办所有阶段。对本次以 10 nm 位置偏差为重点的研究，选择应由完整误差链和实现成本决定，不能只按最小文件或最好看的截图排序。</p>
+</section>

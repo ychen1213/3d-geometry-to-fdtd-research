@@ -1,0 +1,15 @@
+<section id="start">
+<h2>阅读入口：我们到底在选择什么</h2>
+<p>我们的对象是一块经过刻蚀的硅：AH53 示例中的条形 mark 保留并凸起，周围硅被刻掉，名义高差为 300 nm。工艺模型进一步包含侧壁倾斜、横向侵蚀、局部深度变化与粗糙边缘。现在希望把这块三维硅放进电磁求解器，在 532 nm 照明下计算光学信号，再研究这些形貌变化会让位置读数偏多少。</p>
+<p>这件事包含四个问题：怎样记录形状，怎样把形状转到计算网格，怎样计算电磁场，以及怎样从场得到位置。一个文件变小，只说明其中某一步的数据组织改变；要判断有没有帮助，需要追踪后面几步。</p>
+<div class="cards"><div class="card"><b>10 nm</b><p>本次重点研究的位置偏差目标；1 nm、0.1 nm 作为更严格的扩展档。都不是已通过的验收结果。</p></div><div class="card"><b>两个前端，一套验证</b><p>比较富体素与显式表面，再汇入相同的材料映射和求解链路，避免只凭后缀选方案。</p></div><div class="card"><b>证据分层</b><p>文献依据、历史实测、工程推断、待验证建议分别标明；不把导入成功等同于光学精度通过。</p></div></div>
+<figure><img src="assets/pipeline.svg" alt="从工艺结构经过几何表达、网格材料映射、电磁场计算，到位置读数的五阶段流程"><figcaption>图 1 · 同一形状可以有不同文件表达；无论从哪种入口进入，最终都需要一个明确的几何到电磁离散的映射。本图为本教程原创示意。</figcaption></figure>
+<div class="reading-route"><strong>建议阅读顺序</strong><p>第一次接触三维文件：按第一部分阅读到“转换”，再用下面的交互图理解边界。想复盘之前的工作：看第二部分的同范围对照表。准备写求解程序：重点读第三部分的接口、边界、资源和验收实验，最后看第四部分的计算器和行动建议。</p></div>
+<h3>先分清五个容易混用的“精度”</h3>
+<ol><li><strong>真实工艺形貌的可信度：</strong>工艺模型是否经过实际加工数据校准。当前非理想参数是行为模型示例，不能仅凭逼真的外观当作真实设备预测。</li><li><strong>工艺离散的分辨率：</strong>模型在多细的空间尺度上保存信息。已有主样本为 20 nm 工艺体素，原始导出没有界面平面信息。</li><li><strong>表示与转换误差：</strong>体素阈值化、表面重建、坐标量化、减面可能使界面发生变化。</li><li><strong>电磁离散误差：</strong>计算网格、边界更新方法、材料拟合、PML、仿真时长共同影响场和相位。</li><li><strong>最终位置偏差：</strong>同一位置提取方法处理计算信号以后，读数相对参考值偏多少。它是本次选型最终需要验证的量。</li></ol>
+<p>例如，“减面新增的采样表面距离不到 1 nm”只是第三项的一部分证据，不能替代“位置读数误差不到 10 nm”。同样，精确保留一个未经校准的工艺模型，也不能保证它就是实际硅表面。详见后文的历史证据和误差预算。</p>
+<h3>交互理解：同一条界面，三种记录方法</h3>
+<p>下面故意只画一个二维截面，硅在界面左边，空气在右边。橙色虚线是教学用连续界面。拖动位移或改变网格，比较三种数据记录方式。中间的颜色代表方格内硅的面积份额；推广到三维才是体积分数。这里用小网格数值采样近似面积，尚未涉及 Maxwell 方程。</p>
+<div class="demo" id="boundary-demo"><div class="controls"><label>网格间距 <select id="demo-step"><option value="20">20 nm</option><option value="40" selected>40 nm</option><option value="60">60 nm</option></select></label><label>整体平移 <input id="demo-shift" type="range" min="0" max="40" step="1" value="10"><output id="demo-shift-value">10 nm</output></label><button id="demo-reset" type="button">恢复示例</button></div><div class="canvas-grid"><div><canvas id="canvas-label" width="360" height="340" aria-label="按方格中心判定硅或空气的二值采样"></canvas><p><strong>单材料标签</strong><br>只记录 0/1；此例按方格中心判定。</p></div><div><canvas id="canvas-fraction" width="360" height="340" aria-label="记录硅面积占比的方格"></canvas><p><strong>占比</strong><br>保留混合程度；单独一个占比仍不能唯一确定界面。</p></div><div><canvas id="canvas-surface" width="360" height="340" aria-label="以折线显式记录边界"></canvas><p><strong>显式表面</strong><br>截面中为折线，三维中可以是三角面。</p></div></div><div class="demo-result" id="boundary-result" aria-live="polite"></div><p class="small">教学例并非 AH53 实测，也不模拟 Lumerical 的二值插值或共形算法。显式表面进入一个只做中心判定的求解器，仍会发生锁格；占比图也没有证明任何电磁等效介质模型。</p></div>
+<noscript><p class="no-js">浏览器未启用 JavaScript；正文、数据表和静态图仍可阅读，交互示例暂不可用。</p></noscript>
+</section>

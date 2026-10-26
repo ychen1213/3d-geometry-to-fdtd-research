@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-26",
+  "chinese_characters": 31084,
+  "headings": 75,
+  "references": 51,
+  "chapters": [
+    {
+      "path": "chapters/00_start.html",
+      "sha256": "e582cc42ee3eb7a913c2d6c6e2067a523a642a18d8727e547e660a3d903ba6b2",
+      "bytes": 5243
+    },
+    {
+      "path": "chapters/01_representations.html",
+      "sha256": "5ad9fc2a9d2ca4aa75715642dabde3dbea9b555c7dc66b5b679c8b011245669c",
+      "bytes": 36259
+    },
+    {
+      "path": "chapters/02_history.html",
+      "sha256": "4de8c1901b99c62e9e14a318fb40810ea3a1812dd34be4470457de05bc6999fd",
+      "bytes": 36571
+    },
+    {
+      "path": "chapters/03_fdtd.html",
+      "sha256": "04cd547d5247eff5cc13be7775f78f24ec86eb23f080b6da7077224539def87e",
+      "bytes": 46726
+    },
+    {
+      "path": "chapters/04_workshop.html",
+      "sha256": "8ae21e51942ab3274e196074748786df1ca18f4358f3f87715680614200ba7ee",
+      "bytes": 12271
+    }
+  ],
+  "target_position_error_nm": 10,
+  "secondary_targets_nm": [
+    1,
+    0.1
+  ],
+  "new_electromagnetic_simulations": false,
+  "publication_visibility": "public"
+}

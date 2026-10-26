@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "root_path_policy": "All historical source paths are relative to CoventorProjects. Full source reports are retained locally, not bundled. This package includes selected numeric evidence and provenance hashes only.",
+  "json_pointer_convention": "RFC6901 pointers or explicit group names locate fields in each source report; reports ending summary.json may be root arrays.",
+  "reports": [
+    {
+      "id": "AH53_FDTD_Import/full/manifest.json",
+      "project_relative_path": "AH53_FDTD_Import/full/manifest.json",
+      "sha256": "7a54fb315eb7e96cc2c71206b4d52fc41644b70afe21b186f4d241a9da2e875e",
+      "bytes": 2660,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Import/full/verification.json",
+      "project_relative_path": "AH53_FDTD_Import/full/verification.json",
+      "sha256": "ef36c1452b374609fecae455451d5b60c696d3757744bf6763459a076f032482",
+      "bytes": 6407,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/comparison.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/comparison.json",
+      "sha256": "ed6722f63c881ab0a3aa78fa99f832bc4ecae159899d97064f64f5fe535fd5f4",
+      "bytes": 5385,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/surface_accuracy_staggered.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/surface_accuracy_staggered.json",
+      "sha256": "d3a59f85f203ffc10c1f96075e50c03b8741355ffb72c70ae3921c8af7532860",
+      "bytes": 6893,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/fraction_surface/report.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/fraction_surface/report.json",
+      "sha256": "c8dd1f7fd48384f8e00ea686d37decbbb58b1658a34ca89924f93d1155423316",
+      "bytes": 1049,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/plane_surface/report.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/plane_surface/report.json",
+      "sha256": "bc5face2e468e3cd6005d8066feacb784e2fa2eb1706f7182b84340ed9b5895f",
+      "bytes": 40065,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/plane_surface/import_report.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/plane_surface/import_report.json",
+      "sha256": "0b4d95af4f1f82e2c5554047a4101fe7dcbb31ba78bb04195374efb11fabdbdc",
+      "bytes": 782,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/native_probe/native_surface_report.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/native_probe/native_surface_report.json",
+      "sha256": "71700ff07b2a905241fe63cd40a57219e7ff27b326cccb5ea44b726fe62fc1a7",
+      "bytes": 7195,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_Alternatives/native_full/surface_accuracy.json",
+      "project_relative_path": "AH53_FDTD_Alternatives/native_full/surface_accuracy.json",
+      "sha256": "cf7eae266a5431ed4434a9530df77a9dfab4b0bf32ea7daa0ca314feb09dae42",
+      "bytes": 1938,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Converter/outputs/AH53_from_vdata/conversion_manifest.json",
+      "project_relative_path": "VDATA_Converter/outputs/AH53_from_vdata/conversion_manifest.json",
+      "sha256": "c5095148deb98e807194092e958142befa066450392741c2eaa015dfcdf398e7",
+      "bytes": 4455,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Converter/outputs/AH53_from_vdata/information_loss_check.json",
+      "project_relative_path": "VDATA_Converter/outputs/AH53_from_vdata/information_loss_check.json",
+      "sha256": "37b16b7927813943472de00352d75e44d73098f48a5cdf934182e54474cf7dd4",
+      "bytes": 646,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/lossless/report.json",
+      "project_relative_path": "VDATA_Optimization/lossless/report.json",
+      "sha256": "4e001f4872004933877f43c69f8eb9ffbc08e616a780ded4e0640319ca812862",
+      "bytes": 1692,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/entropy/report.json",
+      "project_relative_path": "VDATA_Optimization/entropy/report.json",
+      "sha256": "b67bb80f9683bdd4f5afafe9d172dc6fd189a9d703a2942253fd23a9d5b98346",
+      "bytes": 14110,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/planar/report.json",
+      "project_relative_path": "VDATA_Optimization/planar/report.json",
+      "sha256": "c3f48ccfae893304c2b1097c8a81ebad8722f50e861f62d65fb262b40b8dc53d",
+      "bytes": 3924,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/planar/audit.json",
+      "project_relative_path": "VDATA_Optimization/planar/audit.json",
+      "sha256": "d5e13ffd04acdd388f33e55e7eb04d7e0d5fd02a2eae4de368a7ee4e152a44f6",
+      "bytes": 490,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/qem/summary.json",
+      "project_relative_path": "VDATA_Optimization/qem/summary.json",
+      "sha256": "f296fa1b3bd4ba3f62c1001eec9070e8430035f25b423f2216db4d4b244ab7d2",
+      "bytes": 19117,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/storage/storage_comparison.json",
+      "project_relative_path": "VDATA_Optimization/storage/storage_comparison.json",
+      "sha256": "c79548fd66ee7391b42aeecfb9bd50f027426093618fda404cbf5b06603ad566",
+      "bytes": 8534,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "VDATA_Optimization/optimization_summary.json",
+      "project_relative_path": "VDATA_Optimization/optimization_summary.json",
+      "sha256": "c110897c964a8351d36d9092fb45cac9be0a7363c71444f8f3968cd6704953e8",
+      "bytes": 3750,
+      "source_kind": "our_local_experiment_report"
+    },
+    {
+      "id": "AH53_FDTD_RunStudy/results.json",
+      "project_relative_path": "AH53_FDTD_RunStudy/results.json",
+      "sha256": "17ae4e0c02639d29d181927234ace41b22ffb6177b2f380f709b2e232eec3fe0",
+      "bytes": 77166,
+      "source_kind": "our_local_experiment_report"
+    }
+  ],
+  "assets": [
+    {
+      "project_relative_path": "AH53_FDTD_Alternatives/comparison.png",
+      "package_relative_path": "assets/hist_crop_comparison.png",
+      "sha256": "0ebfd190cd40a52a1c829b8578806c3b31f724455102ba91f1593e550bac53b0",
+      "bytes": 220328,
+      "owner": "self-generated experiment visualization",
+      "scope_note": "Single y section; binary curve is interpolated source field, not measured FDTD boundary."
+    },
+    {
+      "project_relative_path": "VDATA_Optimization/comparison.png",
+      "package_relative_path": "assets/hist_optimization.png",
+      "sha256": "e3b69c15b499b7174a9bbc8e08a2165f0ed696abbad2740f927686558b7560a2",
+      "bytes": 399011,
+      "owner": "self-generated experiment visualization",
+      "scope_note": "Geometry-file and CAD memory results; not solver-memory comparison; QEM errors sampled against baseline STL."
+    }
+  ],
+  "group_locations": {
+    "binary_full": "AH53_FDTD_Import/full/manifest.json#/",
+    "small_crop_comparison": "AH53_FDTD_Alternatives/surface_accuracy_staggered.json#/cases",
+    "fraction_surface": "AH53_FDTD_Alternatives/fraction_surface/report.json#/",
+    "plane_surface": "AH53_FDTD_Alternatives/plane_surface/report.json#/",
+    "native_probe": "AH53_FDTD_Alternatives/native_probe/native_surface_report.json#/",
+    "native_full_accuracy": "AH53_FDTD_Alternatives/native_full/surface_accuracy.json#/",
+    "standalone_vdata": "VDATA_Converter/outputs/AH53_from_vdata/conversion_manifest.json#/materials",
+    "standalone_vdata.reference_comparison": "VDATA_Converter/outputs/AH53_from_vdata/information_loss_check.json#/",
+    "lossless": "VDATA_Optimization/lossless/report.json#/",
+    "entropy": "VDATA_Optimization/entropy/report.json#/",
+    "planar": "VDATA_Optimization/planar/report.json#/",
+    "planar.audit": "VDATA_Optimization/planar/audit.json#/",
+    "qem": "VDATA_Optimization/qem/summary.json#/",
+    "cad_storage": "VDATA_Optimization/storage/storage_comparison.json#/",
+    "qem_candidates": "VDATA_Optimization/optimization_summary.json#/comparison",
+    "fdtd_performance": "AH53_FDTD_RunStudy/results.json#/benchmarks"
+  }
+}

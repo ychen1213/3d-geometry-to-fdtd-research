@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 370" role="img" aria-labelledby="title desc">
+<title id="title">50%占比不能唯一确定界面</title><desc id="desc">三个同样大的正方形分别左半、下半和对角一半填充硅，硅面积均为一半，但界面方向不同。沿法向挤出后体积分数也相同。</desc>
+<rect width="1000" height="370" rx="18" fill="#f5f8fc"/>
+<g font-family="Segoe UI, Microsoft YaHei, sans-serif" fill="#183147"><text x="30" y="43" font-size="25" font-weight="700">三个格子都写 fSi = 0.5，真实界面却不同</text>
+<g transform="translate(90 95)"><rect width="150" height="150" fill="white"/><rect width="75" height="150" fill="#77afd3"/><rect width="150" height="150" fill="none" stroke="#52758c" stroke-width="2"/><path d="M75 0V150" stroke="#1e628e" stroke-width="3"/><text x="25" y="190" font-size="20">硅在左半</text></g>
+<g transform="translate(425 95)"><rect width="150" height="150" fill="white"/><rect y="75" width="150" height="75" fill="#77afd3"/><rect width="150" height="150" fill="none" stroke="#52758c" stroke-width="2"/><path d="M0 75H150" stroke="#1e628e" stroke-width="3"/><text x="25" y="190" font-size="20">硅在下半</text></g>
+<g transform="translate(760 95)"><rect width="150" height="150" fill="white"/><path d="M0 0V150H150Z" fill="#77afd3"/><rect width="150" height="150" fill="none" stroke="#52758c" stroke-width="2"/><path d="M0 0L150 150" stroke="#1e628e" stroke-width="3"/><text x="25" y="190" font-size="20">硅斜切一半</text></g>
+<text x="295" y="180" font-size="26" fill="#6c7e8c">≠</text><text x="630" y="180" font-size="26" fill="#6c7e8c">≠</text>
+<text x="30" y="333" font-size="19">占比说明“多少”，法向与交点说明“怎么分”。需要明确记录或重建后者。</text>
+<text x="30" y="358" font-size="14" fill="#607485">自主绘制的几何反例 · 二维面积沿法向均匀挤出后，对应三维体积分数</text></g></svg>

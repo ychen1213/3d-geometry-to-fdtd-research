@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="从零理解三维表达，复盘 Coventor VDATA 到 Lumerical 的实测路线，并为 10 nm 位置测量课题选择自研 FDTD 几何与边界方案。"><title>从三维工艺结构到自研 FDTD · 3D 表达与计算选型调研</title><link rel="stylesheet" href="assets/style.css"><link rel="icon" href="data:,"></head>
+<body id="top"><header class="hero"><p class="eyebrow">A research-backed guide · Geometry / Interfaces / FDTD</p><h1>从三维工艺结构<br>到自研 FDTD</h1><p>读懂体素、三角网格和其他三维表达；复盘已经走过的转换路线；围绕 10 nm 位置测量目标，比较精度、内存和实现成本。</p><p class="meta">2026-10-26 · 中文入门与技术选型 · 历史证据 + 原始文献 + 待验证方案 · 公开版</p><p class="meta"><a href="https://github.com/ychen1213/3d-geometry-to-fdtd-research">GitHub 源码与数据</a> · 离线打开 index.html 即可阅读 · 全文约 3.1 万汉字</p></header>
+<div class="layout"><aside class="sidebar"><strong>阅读目录</strong><div class="tools"><button id="mobile-nav" aria-expanded="false" type="button">展开目录</button><button id="print-button" type="button">打印 / 保存 PDF</button></div><progress id="reading-progress" max="1" value="0" aria-label="阅读进度"></progress><p class="status">重点：10 nm<br>扩展：1 nm / 0.1 nm<br>现有电脑 → 更强工作站</p><nav id="toc" aria-label="章节导航"><ol><li class="toc-2"><a href="#heading-001">阅读入口：我们到底在选择什么</a></li><li class="toc-3"><a href="#heading-002">先分清五个容易混用的“精度”</a></li><li class="toc-3"><a href="#heading-003">交互理解：同一条界面，三种记录方法</a></li><li class="toc-2"><a href="#heading-004">第一部分 · 从零认识三维表达：同一根凸起的硅条，为什么会有这么多文件？</a></li><li class="toc-3"><a href="#geom-four-layers">先分清四层：形状、文件、材料和计算网格</a></li><li class="toc-3"><a href="#geom-coordinates">坐标和单位：最容易制造“假精度”的地方</a></li><li class="toc-2"><a href="#heading-007">只记录表面：点云、三角网格与 CAD 曲面</a></li><li class="toc-3"><a href="#geom-point-cloud">点云：知道一些表面点，不一定知道点之间是什么</a></li><li class="toc-3"><a href="#geom-triangle-mesh">三角网格：用一张有折痕的薄壳包住实体</a></li><li class="toc-3"><a href="#geom-cad">CAD 的 B-Rep / NURBS / STEP：用曲面公式和连接关系记录边界</a></li><li class="toc-3"><a href="#geom-csg">CSG：保存“怎样组合出来”，而非逐点列出表面</a></li><li class="toc-2"><a href="#heading-012">记录空间内部：体素、占比与稀疏结构</a></li><li class="toc-3"><a href="#geom-voxel">规则体素：把三维空间变成可索引的数组</a></li><li class="toc-3"><a href="#geom-fractions">体积分数：知道“有多少硅”，还不等于知道“硅在哪里”</a></li><li class="toc-3"><a href="#geom-sampling">格心、格角和边：同一个数组形状，可能指向不同位置</a></li><li class="toc-3"><a href="#geom-sparse">稀疏体素、RLE、分块与八叉树：少写重复内容</a></li><li class="toc-2"><a href="#heading-017">用函数、界面高度或体单元表示结构</a></li><li class="toc-3"><a href="#geom-sdf">隐式函数、SDF 与 Level Set：通过数值回答“离边界多远”</a></li><li class="toc-3"><a href="#geom-heightfield">高度图和多层界面：适合受限制的三维几何</a></li><li class="toc-3"><a href="#geom-volume-mesh">四面体、六面体体网格：不仅围住表面，还把内部切开</a></li><li class="toc-3"><a href="#geom-neural">神经隐式、NeRF 与 3D Gaussian：名字里的“三维”不保证适合电磁计算</a></li><li class="toc-2"><a href="#heading-022">转换算法究竟改了什么：表面提取、体素化与减面</a></li><li class="toc-3"><a href="#geom-marching-cubes">Marching Cubes：从一个标量场里找出等值面</a></li><li class="toc-3"><a href="#geom-voxelization">Voxelization：把一个实体重新投到空间格子里</a></li><li class="toc-3"><a href="#geom-bvh">BVH：加速寻找相关三角形，不改动几何</a></li><li class="toc-3"><a href="#geom-qem">QEM 减面：挑选“代价较小”的边合并</a></li><li class="toc-3"><a href="#geom-compression">六种“变小”要分别看待</a></li><li class="toc-2"><a href="#heading-028">把表示方法放到同一张表里</a></li><li class="toc-2"><a href="#heading-029">第二部分 · 我们已经测试过什么：从 468 MB 的二值模型，到可追溯的表面与减面模型</a></li><li class="toc-3"><a href="#hist-source">2.1 实验对象：一份模型，两个不同的信息来源</a></li><li class="toc-3"><a href="#heading-031">2.2 最先打通的路线：VDATA → 三维二值数组 → MAT → Lumerical</a></li><li class="toc-3"><a href="#heading-032">2.3 保留占比再找表面：marching cubes 做了什么</a></li><li class="toc-3"><a href="#hist-plane">2.4 平面信息辅助：更丰富的输入，仍然是重建原型</a></li><li class="toc-3"><a href="#hist-native">2.5 原生 Simple 与 Standard：厂商导出的表面也要验收</a></li><li class="toc-3"><a href="#hist-crop-table">2.6 在相同小范围里比较：改善体现在哪里</a></li><li class="toc-3"><a href="#heading-036">2.7 为什么没有采用一个高度图来代替三维结构</a></li><li class="toc-3"><a href="#heading-037">2.8 后来建立的独立 VDATA 转换器：输入来源终于满足可复用要求</a></li><li class="toc-3"><a href="#heading-038">2.9 第一类减小方法：不动几何，只去掉重复和压缩字节</a></li><li class="toc-3"><a href="#heading-039">2.10 第二类减小方法：严格共面的三角形合成一个多边形</a></li><li class="toc-3"><a href="#heading-040">2.11 第三类减小方法：QEM 用少量几何改变换取更少的面</a></li><li class="toc-3"><a href="#heading-041">2.12 真正运行过电磁求解的是哪些测试</a></li><li class="toc-3"><a href="#heading-042">2.13 这些历史实验对 10 nm 定位课题意味着什么</a></li><li class="toc-2"><a href="#heading-043">第三部分 · 从三维文件到自研 FDTD：真正需要保留下来的是什么</a></li><li class="toc-2"><a href="#heading-044">先分清四层：文件、几何、离散材料、电磁场</a></li><li class="toc-2"><a href="#heading-045">Yee 网格究竟是什么，为什么 STL 不是 FDTD 的计算网格</a></li><li class="toc-3"><a href="#fdtd-two-grids">工艺体素与电磁网格不能强行一一对应</a></li><li class="toc-2"><a href="#heading-047">最影响精度的一步：把材料边界映射到 Yee 网格</a></li><li class="toc-3"><a href="#fdtd-plic">为什么只有“占 30%”还不够</a></li><li class="toc-3"><a href="#fdtd-tensor">“混合材料”为什么不能只平均折射率</a></li><li class="toc-2"><a href="#heading-050">我们的 Si 在 532 nm 有吸收：为什么这会改变算法选择</a></li><li class="toc-2"><a href="#heading-051">Lumerical 为什么提供 STL 入口，它还考虑了哪些因素</a></li><li class="toc-2"><a href="#heading-052">我们的现有程序处在哪一步</a></li><li class="toc-3"><a href="#fdtd-upgrade-options">渐进升级与新架构如何比较</a></li><li class="toc-2"><a href="#heading-054">建议的数据协议：双几何入口，一个可追溯的中间层</a></li><li class="toc-3"><a href="#fdtd-cache">应缓存的是可重用计算，不是错误地复用旧结果</a></li><li class="toc-2"><a href="#heading-056">文件小、几何内存小与求解内存小，分别怎么获得</a></li><li class="toc-3"><a href="#fdtd-memory-arrays">内存里到底装了哪些东西</a></li><li class="toc-3"><a href="#fdtd-cpu-gpu">CPU 与 GPU：先管数据搬运，再谈计算峰值</a></li><li class="toc-2"><a href="#heading-059">为什么网格减半，计算通常远不止翻倍</a></li><li class="toc-2"><a href="#heading-060">已有 AH53 实测说明了什么，以及工作站应怎样规划</a></li><li class="toc-3"><a href="#fdtd-capacity-planning">容量分档是实验规划，不是硬件购买或速度承诺</a></li><li class="toc-2"><a href="#heading-062">课题真正的输出：10 nm 位置偏差意味着什么</a></li><li class="toc-3"><a href="#fdtd-finite-mark">有限三维 Mark 与有限光斑，为什么不能照搬周期公式</a></li><li class="toc-2"><a href="#heading-064">10 nm 目标的误差预算：先作为设计分配，再由实验调整</a></li><li class="toc-2"><a href="#heading-065">建议的验证矩阵：让“哪种输入更好”成为可重复结果</a></li><li class="toc-3"><a href="#fdtd-grid-phase-detail">网格相位与真实位移要分开</a></li><li class="toc-3"><a href="#fdtd-reference-quality">怎样获得足够强的参考</a></li><li class="toc-2"><a href="#heading-068">落地顺序：把格式选择变成可检验的工程决定</a></li><li class="toc-2"><a href="#heading-069">第四部分 · 用计算器把选型问题落到数量级</a></li><li class="toc-3"><a href="#heading-070">1. 先问内存存的是什么，再问文件多大</a></li><li class="toc-3"><a href="#heading-071">2. 从位置预算回推相位预算</a></li><li class="toc-3"><a href="#heading-072">3. 如何阅读已有数字</a></li><li class="toc-3"><a href="#heading-073">4. 课题下一步的推荐顺序</a></li><li class="toc-2"><a href="#heading-074">附录 · 术语和常见问题</a></li><li class="toc-2"><a href="#references">参考文献与证据索引</a></li></ol></nav></aside><main><section id="start">
+<h2 id="heading-001">阅读入口：我们到底在选择什么</h2>
+<p>我们的对象是一块经过刻蚀的硅：AH53 示例中的条形 mark 保留并凸起，周围硅被刻掉，名义高差为 300 nm。工艺模型进一步包含侧壁倾斜、横向侵蚀、局部深度变化与粗糙边缘。现在希望把这块三维硅放进电磁求解器，在 532 nm 照明下计算光学信号，再研究这些形貌变化会让位置读数偏多少。</p>
+<p>这件事包含四个问题：怎样记录形状，怎样把形状转到计算网格，怎样计算电磁场，以及怎样从场得到位置。一个文件变小，只说明其中某一步的数据组织改变；要判断有没有帮助，需要追踪后面几步。</p>
+<div class="cards"><div class="card"><b>10 nm</b><p>本次重点研究的位置偏差目标；1 nm、0.1 nm 作为更严格的扩展档。都不是已通过的验收结果。</p></div><div class="card"><b>两个前端，一套验证</b><p>比较富体素与显式表面，再汇入相同的材料映射和求解链路，避免只凭后缀选方案。</p></div><div class="card"><b>证据分层</b><p>文献依据、历史实测、工程推断、待验证建议分别标明；不把导入成功等同于光学精度通过。</p></div></div>
+<figure><img src="assets/pipeline.svg" alt="从工艺结构经过几何表达、网格材料映射、电磁场计算，到位置读数的五阶段流程"><figcaption>图 1 · 同一形状可以有不同文件表达；无论从哪种入口进入，最终都需要一个明确的几何到电磁离散的映射。本图为本教程原创示意。</figcaption></figure>
+<div class="reading-route"><strong>建议阅读顺序</strong><p>第一次接触三维文件：按第一部分阅读到“转换”，再用下面的交互图理解边界。想复盘之前的工作：看第二部分的同范围对照表。准备写求解程序：重点读第三部分的接口、边界、资源和验收实验，最后看第四部分的计算器和行动建议。</p></div>
+<h3 id="heading-002">先分清五个容易混用的“精度”</h3>
+<ol><li><strong>真实工艺形貌的可信度：</strong>工艺模型是否经过实际加工数据校准。当前非理想参数是行为模型示例，不能仅凭逼真的外观当作真实设备预测。</li><li><strong>工艺离散的分辨率：</strong>模型在多细的空间尺度上保存信息。已有主样本为 20 nm 工艺体素，原始导出没有界面平面信息。</li><li><strong>表示与转换误差：</strong>体素阈值化、表面重建、坐标量化、减面可能使界面发生变化。</li><li><strong>电磁离散误差：</strong>计算网格、边界更新方法、材料拟合、PML、仿真时长共同影响场和相位。</li><li><strong>最终位置偏差：</strong>同一位置提取方法处理计算信号以后，读数相对参考值偏多少。它是本次选型最终需要验证的量。</li></ol>
+<p>例如，“减面新增的采样表面距离不到 1 nm”只是第三项的一部分证据，不能替代“位置读数误差不到 10 nm”。同样，精确保留一个未经校准的工艺模型，也不能保证它就是实际硅表面。详见后文的历史证据和误差预算。</p>
+<h3 id="heading-003">交互理解：同一条界面，三种记录方法</h3>
+<p>下面故意只画一个二维截面，硅在界面左边，空气在右边。橙色虚线是教学用连续界面。拖动位移或改变网格，比较三种数据记录方式。中间的颜色代表方格内硅的面积份额；推广到三维才是体积分数。这里用小网格数值采样近似面积，尚未涉及 Maxwell 方程。</p>
+<div class="demo" id="boundary-demo"><div class="controls"><label>网格间距 <select id="demo-step"><option value="20">20 nm</option><option value="40" selected>40 nm</option><option value="60">60 nm</option></select></label><label>整体平移 <input id="demo-shift" type="range" min="0" max="40" step="1" value="10"><output id="demo-shift-value">10 nm</output></label><button id="demo-reset" type="button">恢复示例</button></div><div class="canvas-grid"><div><canvas id="canvas-label" width="360" height="340" aria-label="按方格中心判定硅或空气的二值采样"></canvas><p><strong>单材料标签</strong><br>只记录 0/1；此例按方格中心判定。</p></div><div><canvas id="canvas-fraction" width="360" height="340" aria-label="记录硅面积占比的方格"></canvas><p><strong>占比</strong><br>保留混合程度；单独一个占比仍不能唯一确定界面。</p></div><div><canvas id="canvas-surface" width="360" height="340" aria-label="以折线显式记录边界"></canvas><p><strong>显式表面</strong><br>截面中为折线，三维中可以是三角面。</p></div></div><div class="demo-result" id="boundary-result" aria-live="polite"></div><p class="small">教学例并非 AH53 实测，也不模拟 Lumerical 的二值插值或共形算法。显式表面进入一个只做中心判定的求解器，仍会发生锁格；占比图也没有证明任何电磁等效介质模型。</p></div>
+<noscript><p class="no-js">浏览器未启用 JavaScript；正文、数据表和静态图仍可阅读，交互示例暂不可用。</p></noscript>
+</section>
+
+<section id="geom-basics">
+<h2 id="heading-004">第一部分 · 从零认识三维表达：同一根凸起的硅条，为什么会有这么多文件？</h2>
+<p class="lead">先记住一个问题：<strong>程序读完文件以后，究竟知道了哪些位置是硅、哪些位置是空气，以及两者的分界在哪里？</strong>文件能旋转、看起来光滑、后缀叫“3D”，都不能单独回答这个问题。本章用“硅基底上凸起的一根条纹”贯穿说明。条纹四周被刻蚀，顶部保留，侧壁可以倾斜、圆滑或有粗糙度；示意图为作者自主绘制的概念模型，并非 AH53 实测形貌。</p>
+
+<h3 id="geom-four-layers">先分清四层：形状、文件、材料和计算网格</h3>
+<p><strong>几何表示</strong>决定怎样记录形状：例如用三角形包围硅的外表面，或把空间切成小格并记录每格的材料。<strong>文件格式与编码</strong>决定把这些记录怎样写进磁盘：文本、二进制、压缩、分块以及字段命名。<strong>物理材料</strong>决定硅怎样响应光场：介电函数、色散、吸收等。<strong>求解离散</strong>决定电磁方程在哪些位置、以什么未知量计算。它们会互相配合，但不能用其中一层替代其他层。</p>
+<figure><img src="assets/geom_layers.svg" alt="四层关系示意：几何表示、文件编码、材料模型和电磁求解离散分别承担不同任务" loading="lazy"><figcaption>同一份表面几何可以装进不同容器，也可以生成不同计算网格。文件格式并不直接决定时间步进算法。</figcaption></figure>
+<p>例如，STL 里的三角形描述的是物体表面；Lumerical 把它导入为 planar solid 几何对象。给这个对象指定“硅”的光学材料，才完成物理赋值。另一方面，HDF5 是组织数组、属性与分块数据的容器；里面既能放体素，也能放顶点表和三角形索引。因此，“STL 对 HDF5”不能直接等同于“表面网格对体素”。<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys：STL 导入</a>；<a href="https://portal.hdfgroup.org/documentation/hdf5/latest/hdf5_chunking.html">HDF Group：分块数据布局</a>。</p>
+<p>记事本里看到英文、数字或长串编码，只说明外层写法。英文标签下面可能放着压缩后的数组；二进制三角形也不一定能直接读出坐标。反过来，一份能读懂的文本文件仍可能记录数千万个元素。判断文件内容，需要格式说明、可靠读取器和解码后的字段，不能靠文件大小或后缀猜测。<strong>“无损解压”只保证还原编码前的记录，不保证这些记录完整表达了真实工艺表面。</strong></p>
+
+<h3 id="geom-coordinates">坐标和单位：最容易制造“假精度”的地方</h3>
+<p>本章约定 X、Y 在晶圆平面内，Z 沿高度。一个坐标数值“0.3”必须说明单位：0.3 µm 是 300 nm，0.3 m 则完全不同。还要说明原点在晶圆中心、裁剪盒角点还是物体中心，以及文件使用哪个轴表示高度。STL 没有标准长度单位；Lumerical 的默认解释是微米，导入时可改变缩放。glTF 则规定长度使用米和右手坐标系。由此可见，格式不同，单位约定也可能不同。<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys：长度单位说明</a>；<a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units">Khronos：glTF 坐标与单位</a>。</p>
+<p>对我们的课题，一份几何必须同时带上<strong>单位、轴顺序、原点、局部到全局的变换、材料编号表和来源</strong>。假设几何采样间距为 20 nm，把格心误当格角，就可能整体移动 10 nm；这已经等于本次重点研究的测量偏差档位。坐标写了很多小数，也只代表数字表达能力，不能证明来源模型具有同等物理精度。</p>
+</section>
+
+<section id="geom-surfaces">
+<h2 id="heading-007">只记录表面：点云、三角网格与 CAD 曲面</h2>
+<h3 id="geom-point-cloud">点云：知道一些表面点，不一定知道点之间是什么</h3>
+<p>点云可想成拿探针测出一批位置：每条记录是一个 <code>(x,y,z)</code>，还可以附带法向、颜色或测量置信度。对凸硅条，扫描到的顶部点与侧壁点能够勾勒轮廓，但点云本身通常不告诉程序“哪些点应当连接”“下面有没有空腔”。从点云得到封闭实体，要额外做表面重建，并决定如何处理缺测区域、噪声和孔洞。Stanford 的扫描数据说明也特意区分原始测量与已经去噪、融合后的重建网格。<a href="https://graphics.stanford.edu/data/3Dscanrep/">Stanford：扫描与表面重建说明</a>。</p>
+<p>数量级例子：一百万个点，仅用三个 float32 坐标就需要 12 MB；加上三个法向分量再加 12 MB。这是自行计算的数组下限，不含索引和容器开销。点云适合接收测量数据或检查表面，作为自研电磁程序的直接输入则需要补齐内部材料判定。对已有工艺实体，先删掉连接关系变成点云，通常会增加一次不必要的重建。</p>
+
+<h3 id="geom-triangle-mesh">三角网格：用一张有折痕的薄壳包住实体</h3>
+<p>三角网格保存顶点和“哪三个顶点组成一片面”。三点确定一个平面，把许多小面拼起来，就能近似侧壁弯曲和圆角。对于一个无圆角的理想长方体，8 个顶点、12 个三角形已经足够；粗糙表面才需要更多面。它在三维空间中，但每片三角形是没有厚度的二维面。封闭且方向一致的外壳，加上内部材料定义，才能用于表示硅实体。孔洞、自相交、重复面和错误方向会让内部判定变得不可靠；CGAL 为这些检查和点的内外判定提供了独立算法。<a href="https://doc.cgal.org/latest/Polygon_mesh_processing/index.html">CGAL：Polygon Mesh Processing</a>。</p>
+<p>三角形内部的坐标是连续的，可以把整根硅条平移 3 nm，而不要求移动一个整数格。它仍然是<strong>分片平面</strong>，弯曲表面的法向会在三角形边处变化。显示程序能把顶点法向插值，使明暗看起来更平滑，但这种着色不会自动移动三角形，也不会恢复几何曲率。<a href="https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes">PBRT：三角网格与着色法向</a>。</p>
+<div class="table-scroll"><table><thead><tr><th>格式</th><th>通常装什么</th><th>对本课题的重要限制</th></tr></thead><tbody>
+<tr><td>STL</td><td>三角面逐片列出，ASCII 或二进制</td><td>缺少标准单位和完整材料语义；本流程用旁附清单补充。</td></tr>
+<tr><td>OBJ + MTL</td><td>顶点表、面索引、对象/材料分组，可附法向与纹理</td><td>材质名称能用于映射，MTL 的显示参数通常不够描述光学色散；原规范也有自由曲面语法，不能说所有 OBJ 只能存三角形。</td></tr>
+<tr><td>PLY</td><td>顶点和面及其属性，常用于扫描与网格交换</td><td>能携带颜色等属性不等于已有硅的电磁材料模型；不同读取器支持的属性不同。</td></tr>
+<tr><td>glTF / GLB</td><td>网格、场景、变换、显示材质与纹理；GLB 可统一封装二进制资源</td><td>PBR 材质服务于显示，不能直接当作 FDTD 的 ε(ω)。适合教程展示与交互审阅。</td></tr>
+</tbody></table></div>
+<p class="source">表中格式依据：<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">Ansys STL</a>、<a href="https://www.paulbourke.net/dataformats/obj/">Wavefront 原始 OBJ 规范存档</a>、<a href="https://dirsig.cis.rit.edu/docs/new/obj.html">DIRSIG 官方 OBJ 与材料映射说明</a>、<a href="https://vtk.org/doc/nightly/html/classvtkPLYReader.html">VTK PLY 读取器</a>、<a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html">Khronos glTF 规范</a>。这些格式携带几何属性的能力，不保证每个应用都会完整读取。</p>
+<p>二进制 STL 常规布局为 84 字节头部，加每三角形 50 字节：法向 3 个 float32、三顶点共 9 个 float32，再加 2 字节属性字段。于是 100 万片约 50 MB。STL 重复写入共享顶点；如果改成“顶点表 + 三角索引”，且顶点和索引均为 32 位，则裸数组大小是 <code>12V + 12F</code> 字节。对近似 <code>V≈F/2</code> 的常见大闭合三角网格，100 万片约 18 MB；不含法向、BVH、材料和容器。这是组织方式不同带来的节省，尚未减掉任何面。<a href="https://raw.githubusercontent.com/Kitware/VTK/master/IO/Geometry/vtkSTLWriter.cxx">VTK 二进制 STL 写入实现</a>；<a href="https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes">PBRT：共享顶点与索引结构</a>。</p>
+
+<h3 id="geom-cad">CAD 的 B-Rep / NURBS / STEP：用曲面公式和连接关系记录边界</h3>
+<p>B-Rep 是 boundary representation，即边界表示。数学几何告诉程序每张面是平面、圆柱面或样条曲面；拓扑告诉程序面如何通过边、顶点连接成闭合壳与实体。NURBS 是一类由控制点、权重和节点参数定义的曲线/曲面表达；控制点不是把表面全部采样一遍，而是共同确定一张参数曲面。对理想硅条和规则圆角，用少量面和参数就能很紧凑地表示边界。<a href="https://www.occt3d.com/dev/doc/overview/html/index.html">Open CASCADE：B-Rep、几何与拓扑</a>；<a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__modeling_data.html">Open CASCADE：曲线曲面建模</a>。</p>
+<p>STEP 是工程数据交换标准体系，常见文件可以携带这类几何、拓扑、装配和属性；它并非“更高精度 STL”的同义词。把已经三角化的粗糙条纹转成 STEP，可能只是把每个三角形包装成一张 CAD 面，也可能通过拟合生成新的曲面；后者需要容差并会改变形状。Open CASCADE 的 STEP 转换器区分几何拓扑转换与名称、颜色等扩展数据转换，这也说明“保存为 STEP”没有自动补齐全部物理语义。<a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__step.html">Open CASCADE：STEP Translator</a>。</p>
+<p>因此，CAD 很适合设计几何和规则参数扫描；面对带有随机粗糙、微沟槽和复杂再沉积的工艺结果，强行拟合少量光滑 CAD 面可能把研究对象本身抹掉。拟合得足够细也可能导致大量曲面片，失去体积优势。是否有利，取决于表面能否由少量可靠参数描述，而不是扩展名是否“高级”。</p>
+
+<h3 id="geom-csg">CSG：保存“怎样组合出来”，而非逐点列出表面</h3>
+<p>CSG 是 constructive solid geometry，可理解为积木加布尔运算。比如“基底长方体 ∪ 顶部硅条”，或者“完整硅块 − 两侧刻蚀槽”。文件保存积木尺寸、位置以及并、交、差关系；程序按这棵表达式树判断一个位置是否属于硅。OpenSCAD 的基本体和布尔操作就是直观实例。<a href="https://openscad.org/cheatsheet/">OpenSCAD 官方语法表</a>。</p>
+<p>规则结构只需少量参数，变宽、变高、位移扫描很方便。但“刻蚀深度 300 nm”不能唯一确定真实侧壁与粗糙度；用三个理想长方体重新搭出来，不能声称保留了原 VDATA 的工艺结果。把复杂结果替换成 CSG，应被视为明确的物理简化，并比较位置读数变化。</p>
+</section>
+
+<section id="geom-volumes">
+<h2 id="heading-012">记录空间内部：体素、占比与稀疏结构</h2>
+<h3 id="geom-voxel">规则体素：把三维空间变成可索引的数组</h3>
+<p>把一块空间沿 X、Y、Z 各切成许多小格，就得到体素。数组 <code>M[i,j,k]</code> 可以保存材料编号，例如 0 为空气、1 为硅。单位、格距、原点和轴顺序说明这个索引对应哪里。均匀格距不必是立方体，允许 <code>dx、dy、dz</code> 不同；非均匀直角网格则要给出每个方向的坐标。VTK 明确区分 structured points、rectilinear grid 和 unstructured grid 等数据组织。<a href="https://docs.vtk.org/en/v9.5.2/design_documents/VTKFileFormats.html">VTK：数据集与属性格式</a>。</p>
+<figure><img src="assets/geom_boundary.svg" alt="同一个凸起硅条的剖面分别以点云、显式边界、二值体素、占比和符号距离表达" loading="lazy"><figcaption>为了看清界面，图中画的是三维结构的一张 X–Z 剖面。各种表示存储的信息不同，不能只按外观决定哪种更准确。</figcaption></figure>
+<p>若 <code>N=NxNyNz</code>，uint8 材料标签占 N 字节，一个 float32 数组占 4N 字节。例如 1000³ 个体素的标签是 1 GB，占比是 4 GB；多种材料分别保存全尺寸 float32 掩模时还会继续相乘。二值数据理论上能按位存储，使 1000³ 个值约为 125 MB，但实际数组库常用一字节或更多；压缩文件的大小又是另一回事。这些数字只说明几何数组，不是完整电磁求解内存。</p>
+<p><strong>体素不必意味着每个格子都是一个实心积木。</strong>标签可表示格心采样，数值可表示格内平均占比，也可表示节点上的标量场。这三种语义不同。若数据确实表示“格内材料恒定”，边界就在格面；若数据是节点采样，再通过插值定义边界，则边界可以穿过格子内部。记录位置和插值规则必须写明。</p>
+
+<h3 id="geom-fractions">体积分数：知道“有多少硅”，还不等于知道“硅在哪里”</h3>
+<p>设某格硅占比 <code>fSi=0.3</code>，意思是格体积的 30% 属于硅。相比把整格判为硅或空气，占比保留了边界附近的部分信息。但一个立方格里 50% 的硅可以占左半、下半或斜切的一半；三个结构体积相同、界面方向却不同。<strong>单个占比不能唯一确定界面法向、位置分布和微小孔洞。</strong>这是几何上的信息不足，不是换一个压缩算法就能消除的。</p>
+<figure><img src="assets/geom_fraction.svg" alt="同为50%硅占比的三个格子分别左半、下半和斜切填充，说明体积分数不能唯一确定界面" loading="lazy"><figcaption>相同的 50% 不能区分三种界面；图为二维截面，沿纸面法向挤出后就是对应的三维反例。</figcaption></figure>
+<p>更丰富的边界记录可以包含局部平面 <code>n·x=d</code>，其中 n 决定朝向，d 决定位置；也可以保存网格边与界面的交点及法向。已知这些信息时，重建器不必只靠邻域占比猜测。Dual Contouring 的原始方法使用的 Hermite 数据正是交点与法向，利用这些约束构造表面。<a href="https://www.cse.wustl.edu/~taoju/research/dualContour.pdf">Ju 等：Dual Contouring of Hermite Data</a>。</p>
+<p>不过，一格内可能同时存在多个界面或三个以上材料，一个平面仍不足以完整表示。占比也不能直接当折射率：30% 硅与 70% 空气怎样影响不同电场方向，涉及界面边界条件、材料色散与求解离散。这里先保留几何信息，后文再决定怎样形成电磁更新系数。</p>
+
+<h3 id="geom-sampling">格心、格角和边：同一个数组形状，可能指向不同位置</h3>
+<p>若 x0 表示左侧格界，则第 i 格中心是 <code>x0+(i+1/2)dx</code>，格界是 <code>x0+i·dx</code>。N 个格子需要 N+1 个格界坐标。若 x0 本来表示第一个采样点，就不应再加半格。节点值也不是单元平均值：线性插值两个节点的值，可以定义中间场值；把一个单元平均占比直接当节点值，会改变数学问题。VTK 因此分别用 POINT_DATA 与 CELL_DATA 关联点和单元属性。<a href="https://docs.vtk.org/en/v9.5.2/design_documents/VTKFileFormats.html">VTK：点数据与单元数据</a>。</p>
+<p>这件事对 10 nm 位置研究尤其直接：20 nm 的数据如果错位半格，几何本身就平移 10 nm。正确读取轴顺序、原点和采样位置，通常比先讨论复杂减面算法更优先。几何标签在格心，而电磁场分量分布在交错位置时，还需要求解器自己的映射规则。</p>
+
+<h3 id="geom-sparse">稀疏体素、RLE、分块与八叉树：少写重复内容</h3>
+<p>如果一列有连续 500 个硅标签，可以保存“硅，重复 500 次”，而不是 500 个相同数字；这是游程编码 RLE 的基本想法。它对层状、长连续区域有效，对随机交错值可能没有优势。分块结构则把空间切成小砖块：纯硅、纯空气的块只存一个常数，界面附近的复杂块才展开。八叉树把一个立方区域逐级分为八个子区域，允许均匀区域停在粗层级、复杂区域继续细分。原始 GPU 稀疏体素化研究就利用粗内部/外部与细边界来减少存储。<a href="https://michael-schwarz.com/research/publ/2010/vox/">Schwarz 与 Seidel：Surface and Solid Voxelization</a>。</p>
+<p>这种节省可以是无损的：若一块所有细格都恰好相同，用一个常数代表它，不会丢掉标签。若把“差不多相同”也合并，则引入近似。树还需要节点、索引与遍历开销，数据越零碎越不一定划算。<strong>几何在空气中稀疏，不代表空气中的电磁场可以删掉。</strong>这里减少的是材料描述；要减少实际场更新区域，还需要改变求解算法与边界处理。</p>
+<p>OpenVDB 是成熟的稀疏体数据结构，树、空间变换和元数据彼此分离，适合保存稀疏标量与窄带距离场。它不是简单“每节点只有八个孩子”的普通八叉树，也不是读入后自动变成自适应 FDTD。NanoVDB 把相关结构组织为连续、适合 CPU/GPU 访问的布局。当前官方 FAQ 的精确限制是<strong>树拓扑静态，值可以修改</strong>；不宜笼统写成“所有内容都只读”。<a href="https://www.openvdb.org/documentation/doxygen/overview.html">OpenVDB Overview</a>；<a href="https://www.openvdb.org/documentation/doxygen/NanoVDB_FAQ.html">NanoVDB FAQ</a>。</p>
+<p>对我们的用途，可先采用“压缩存储、按块读取、仅在界面块执行昂贵求交”的方式节省预处理内存，再输出求解器实际需要的数组。这样能把存储优化与数值算法分别验证；未经测试，不能把一个体素库的 GPU 友好宣传换算成 FDTD 加速倍数。</p>
+</section>
+
+<section id="geom-implicit">
+<h2 id="heading-017">用函数、界面高度或体单元表示结构</h2>
+<h3 id="geom-sdf">隐式函数、SDF 与 Level Set：通过数值回答“离边界多远”</h3>
+<p>隐式表示不逐片列出边界，而定义一个函数 <code>φ(x,y,z)</code>。本章约定 φ&lt;0 为硅内部，φ&gt;0 为空气，φ=0 就是边界。如果 |φ| 还等于到最近表面的距离，它就是 signed distance function，符号距离函数，简称 SDF。例如平面 z=z0 的距离函数是 <code>φ=z−z0</code>。曲面可以由公式定义，也可把函数采样到体素或稀疏树中。Level Set 方法用这样的等值面描述随时间运动的界面；函数不必处处是严格距离函数。<a href="https://physbam.stanford.edu/~fedkiw/papers/cam2000-08.pdf">Osher 与 Fedkiw：Level Set Methods</a>。</p>
+<p>它适合求内外、距离、近界面法向以及形状组合。与只存 0/1 相比，距离值提供了更多局部位置线索；但从二值体素算出的 SDF，描述的是该二值结构的距离，不能恢复被二值化丢掉的真实圆角。若用全空间 float32 存 SDF，大小与其他同尺寸 float32 数组相同。窄带 SDF 只在界面附近存真实距离，远处以常数和符号代替，能节省空间；代价是远处不再提供完整距离。<a href="https://www.openvdb.org/documentation/doxygen/overview.html">OpenVDB：窄带 Level Set 的三类区域</a>。</p>
+
+<h3 id="geom-heightfield">高度图和多层界面：适合受限制的三维几何</h3>
+<p>若每个 (x,y) 位置只需要一个表面高度 <code>h(x,y)</code>，硅从底部一直填到该高度，那么二维数组就能定义三维实体。这叫高度场或常说的 2.5D 表示。比如把顶部 500 nm、刻蚀区 200 nm 以及平滑过渡写成高度函数。800×1400 个 float32 高度仅 4.48 MB，而再乘 50 个 Z 层的同类型三维数组是 224 MB；这是按元素数自行计算的 50 倍差异。</p>
+<p>这种紧凑来自强假设：一条竖线最多遇到一个顶界面。倒扣、悬垂、内部孔洞或一列中分离的再沉积颗粒不能由单一高度描述；严格竖直侧壁也需要对不连续高度额外约定连接方式。多层界面可存 <code>h1(x,y)、h2(x,y)…</code>，再给相邻层之间指定材料，适合顺序稳定的膜层。若某层消失、相互穿越或形成复杂拓扑，必须增加规则。这是由函数定义直接得到的适用边界。</p>
+<p>因此，高度场可能是我们条纹模型很经济的专用表示，但需要先检查真实工艺结果能否满足假设。不能因为画面从上方看很规整，就丢掉地下或侧壁的多值结构。Gmsh 的 terrain 与 hybrid model 示例展示了高度/离散表面与三维体网格衔接的实际路线。<a href="https://gmsh.info/doc/texinfo/gmsh.html#x2">Gmsh：地形、离散实体与混合模型</a>。</p>
+
+<h3 id="geom-volume-mesh">四面体、六面体体网格：不仅围住表面，还把内部切开</h3>
+<p>四面体有四个顶点和四张三角面；许多四面体可以填满硅和空气。六面体像可以变形的小盒子；规则体素可以看成一种特殊几何排列，但一般六面体网格并不等同于规则数组。体网格除节点坐标外，还要记录每个单元连哪些节点、材料和邻接关系。Gmsh 的体划分可以生成四面体、棱柱、六面体等单元，并把边界表面与体单元连接起来。<a href="https://gmsh.info/doc/texinfo/gmsh.html#Mesh-module">Gmsh：Mesh module</a>。</p>
+<p>数量级例子：100 万个线性四面体，仅四个 uint32 顶点索引就需 16 MB，另加节点坐标、材料、边/面连接及每单元未知量。网格能沿曲面局部细化，但电磁求解不只取决于“单元个数”。有限元 FEM 用单元上的基函数近似场；间断 Galerkin 类方法允许单元间的场表示间断，通过数值通量耦合；经典 Yee FDTD 则使用规则交错网格上的差分更新。三者的存储和时间步机制不同。<a href="https://mfem.org/electromagnetics/">MFEM：电磁有限元应用</a>；<a href="https://mfem.org/examples/">MFEM：有限元与 DG 示例</a>。</p>
+<p><strong>把 STL 变成四面体文件，不能让现有 Yee 更新公式直接在四面体上工作。</strong>这通常意味着新求解器路线或额外重采样。表面三角形与体四面体在屏幕上都带很多线，但作用完全不同。后文比较自研架构时，将把这类内核改变与“增加一个文件读取器”分别估算。</p>
+
+<h3 id="geom-neural">神经隐式、NeRF 与 3D Gaussian：名字里的“三维”不保证适合电磁计算</h3>
+<p>神经隐式表示把几何函数存在网络权重里。DeepSDF 输入空间坐标、输出带符号距离，因此概念上能回答几何问题；它仍有训练、查询和近似误差，若要给出纳米级界面保证，需要独立验证。NeRF 的经典任务是从视角与空间位置输出辐射亮度和体密度，用照片训练新视角成像；这套密度不是已经标定的硅介电函数。<a href="https://arxiv.org/abs/1901.05103">Park 等：DeepSDF</a>；<a href="https://www.matthewtancik.com/nerf">Mildenhall 等：NeRF 原始项目</a>。</p>
+<p>3D Gaussian Splatting 用一组有位置、尺度与方向等参数的三维高斯表示场景，重点是快速合成图像。视觉重建成功，不保证得到封闭材料边界、内部膜层和波长相关复介电函数。已有可靠工艺几何时，再训练这些表达会多出一层近似和验证成本。因此本报告把它们列为将来有明确压缩或反演需求时的候选，不作为首版电磁输入优先路线。这个优先级判断是针对我们课题的工程推论。<a href="https://arxiv.org/abs/2308.04079">Kerbl 等：3D Gaussian Splatting 原论文</a>。</p>
+</section>
+
+<section id="geom-conversions">
+<h2 id="heading-022">转换算法究竟改了什么：表面提取、体素化与减面</h2>
+<h3 id="geom-marching-cubes">Marching Cubes：从一个标量场里找出等值面</h3>
+<p>想象在一个小立方格的八个角上各有数值。先选阈值 t，例如 0.5；判断哪些角高于 t，哪些低于 t。若一条格边两端跨过阈值，就按两端数值插值，估计交点；再把交点连成三角形。遍历所有格子，就得到一张表面。这就是 Marching Cubes 的基本思路。它生成的是<strong>输入标量场在指定解释下的等值面</strong>，不是直接测得的物理表面。<a href="https://www.cs.toronto.edu/~jacobson/seminar/lorenson-and-cline-1987.pdf">Lorensen 与 Cline：Marching Cubes，1987</a>。</p>
+<p>自算一维例子：两个采样点相距 20 nm，数值是 0.2 与 0.8，0.5 交点在线段正中；若变成 0.4 与 0.8，交点在前四分之一，即距第一个点 5 nm。算法能产生小于原采样间距的顶点移动，但这里的“5 nm”来自插值假设，不能当成源数据已经测到了 5 nm 细节。对单元占比使用同样处理时，更要说明平均值怎样转换为节点场。</p>
+<p>普通查表还可能遇到同样角点正负配置对应不同连接方式的歧义。Lewiner 等方法研究了这些情况的拓扑处理；所谓拓扑保证必须理解为对特定插值模型和实现条件的保证，不能扩展成“真实工艺没有丢信息”。如果可靠界面交点和法向已经存在，Dual Contouring 是另一条可利用更丰富信息的路线；是否优于 MC，要看源数据和实现质量。<a href="https://thomas.lewiner.org/pub/marching_cubes_jgt.html">Lewiner 等：拓扑一致的 MC 实现</a>；<a href="https://www.cse.wustl.edu/~taoju/research/dualContour.pdf">Ju 等：Dual Contouring</a>。</p>
+
+<h3 id="geom-voxelization">Voxelization：把一个实体重新投到空间格子里</h3>
+<p>体素化是反方向的问题：给定封闭三角网格，决定哪些格子属于物体。<strong>中心点采样</strong>只问格心在不在硅里，快但可能漏掉细薄结构；<strong>保守表面体素化</strong>把所有被三角面碰到的格子标记出来，适合不漏表面的检测，但若把这些整格都当实心，会使物体变厚；<strong>占比计算</strong>求硅与格子的相交体积，信息更多，但计算更贵。它们回答的问题不同，不能混用同一个“体素化精度”数字。<a href="https://michael-schwarz.com/research/publ/2010/vox/">Schwarz 与 Seidel：表面、实体与稀疏体素化</a>。</p>
+<p>用每格多个子采样点估计占比，是便于实现的近似；用几何裁剪求交体积则更直接，仍受浮点、退化相交、多材料一致性等问题影响。“表面 → 体素 → 表面”一般不会回到完全相同的网格，因为两次转换可能各自加入采样和插值。验证应该同时比较边界位置、材料体积与最终光学读数。</p>
+
+<h3 id="geom-bvh">BVH：加速寻找相关三角形，不改动几何</h3>
+<p>若有十万片三角形和上千万查询位置，逐一比较非常昂贵。BVH 把三角形按空间位置分组，每组用一个包围盒罩住；包围盒再分组形成树。查询射线或格子不碰某个大盒，就跳过盒内全部三角形。它像目录索引，使程序更快找到相关面，本身不需要把边界变粗。代价是建立树的时间与额外内存。<a href="https://www.pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies">PBRT：Bounding Volume Hierarchies</a>。</p>
+<p>CGAL 的 AABB Tree 提供相交、射线与最近点查询，可作为自研几何预处理的候选。BVH 通常改善实际性能，但极端重叠和退化形状仍可能使查询昂贵，不应承诺每次查询都严格 O(log F)。建好的几何加速结构可以在多次划网格时复用；它不能自动减少电磁场数组大小。<a href="https://doc.cgal.org/latest/AABB_tree/">CGAL：AABB Tree</a>。</p>
+
+<h3 id="geom-qem">QEM 减面：挑选“代价较小”的边合并</h3>
+<p>设两相邻顶点 A、B 合并为一个新顶点 C，周围若干小三角形就会消失或改变。如何选择 C？经典 QEM 把相关三角形所在平面当作约束，累加 C 到这些平面的平方距离，优先执行代价较小的合并。它因此通常先压缩近共面的冗余区域，在曲率和尖角附近保留更多面；实际行为还取决于边界约束、权重与实现。<a href="https://www.cs.cmu.edu/~garland/Papers/quadrics.pdf">Garland 与 Heckbert：Quadric Error Metrics，1997</a>。</p>
+<p><strong>“减少 45% 的面”是数量目标，不是误差上限。</strong>QEM 的局部代价也不等于两表面最大距离，更不是对准位置偏差。随机采样点测到的最大距离，仍可能漏掉未采样的小尖峰。Hausdorff 距离要求考察两个集合中所有点到另一集合的最近距离，再取双向最大；有保证的近似算法或保守包络约束，比“抽几个点很接近”更适合给出边界界限。CGAL 提供包络过滤等额外约束，但这些是附加机制，不能自动归给任何 QEM 实现。<a href="https://doc.cgal.org/latest/Surface_mesh_simplification/index.html">CGAL：减面代价与包络约束</a>；<a href="https://doc.cgal.org/latest/Polygon_mesh_processing/index.html">CGAL：Hausdorff 距离功能</a>。</p>
+<p>对多材料结构，两个材料共享的界面应当由同一份几何约束管理。各材料分别减面，可能出现缝隙或互相重叠；尖端、薄膜和狭缝也需要保护。对研究粗糙度造成的测量偏差的任务，删除一个视觉上不起眼的小起伏，仍可能改变相位或散射。因此减面必须与测量算法的结果一起验证。</p>
+
+<h3 id="geom-compression">六种“变小”要分别看待</h3>
+<div class="table-scroll"><table><thead><tr><th>操作</th><th>是否必然改变几何</th><th>实际节省什么</th><th>验证重点</th></tr></thead><tbody>
+<tr><td>无损压缩，如 gzip / 无损 HDF5 filter</td><td>不改变还原后的记录</td><td>磁盘、传输；分块读取时可降低预处理峰值</td><td>解压后数组/字节一致；确认使用的滤镜确实无损</td></tr>
+<tr><td>共享顶点、索引化</td><td>精确重复坐标和完整属性处理正确时不改变</td><td>重复坐标与部分拓扑存储</td><td>保留材料边界、法向等必要属性；容差合并另算近似</td></tr>
+<tr><td>严格共面多边形合并</td><td>满足共面、边界与拓扑条件时可保持同一表面</td><td>面数与连接信息</td><td>近共面容差、孔洞、凹多边形，以及后续是否又三角化</td></tr>
+<tr><td>量化 / float32→float16</td><td>通常会改变数值</td><td>每个坐标或标量的字节数</td><td>坐标范围、量化步长、局部原点、界面位移</td></tr>
+<tr><td>QEM 减面</td><td>通常改变分片平面边界</td><td>顶点、面、显示与求交成本</td><td>双向边界误差、体积、特征与位置读数</td></tr>
+<tr><td>平滑 / 曲面拟合</td><td>改变形状</td><td>主要改变频谱与外观，未必减小文件</td><td>真实粗糙是否被去掉、形状收缩与系统偏差</td></tr>
+</tbody></table></div>
+<p>表中“保持不变”都有前提。例如按某个容差合并近邻点，就已经允许坐标或连接改变；三角形顶点坐标一样，显示法向也不一定能合并。HDF5 的分块与压缩可以组合，但读出一个块时通常需要处理整块，块大小会影响内存和读取速度；h5py 也明确区分无损压缩和有损 scale-offset 等滤镜。<a href="https://docs.h5py.org/en/stable/high/dataset.html">h5py：分块、压缩与 scale-offset</a>。</p>
+<p>自行推导一个可核验的量化例子：若每轴坐标都舍入到间隔 q 的网格，单轴误差至多 q/2，单顶点欧氏位移至多 √3q/2；这不是全表面的拓扑、体积或电磁误差保证。若 q=1 nm，顶点界限约 0.866 nm，但多个点合并、薄层塌缩或重新三角化仍需额外检查。一个“小于 1 nm 的坐标误差”也不能直接宣布满足 10 nm 的最终位置指标。</p>
+</section>
+
+<section id="geom-comparison">
+<h2 id="heading-028">把表示方法放到同一张表里</h2>
+<p>下表是依据上述定义和来源形成的工程比较，讨论的是<strong>可靠输入与预处理</strong>，不直接承诺时间步进加速。N 为展开体素数，V 为顶点数，F 为面数，B 为实际展开的稀疏块数，P 为参数或网络权重数。实际文件还会有元数据、压缩和索引开销。</p>
+<div class="table-scroll"><table><thead><tr><th>表示</th><th>主要记录量</th><th>边界怎样确定</th><th>材料怎样指定</th><th>适合我们什么环节</th><th>主要代价或风险</th></tr></thead><tbody>
+<tr><td>点云</td><td>O(点数)</td><td>只有采样点，通常要重建</td><td>点属性不自动给出体内部</td><td>测量导入、表面比较</td><td>缺测和重建歧义</td></tr>
+<tr><td>三角/多边形表面</td><td>O(V+F)</td><td>显式分片面</td><td>封闭区域或共享界面标签</td><td>工艺结果交换、重划网格、连续刚体变换</td><td>有效实体检查、曲面近似与求交预处理</td></tr>
+<tr><td>CAD B-Rep / CSG</td><td>取决于面片或参数数</td><td>曲面公式、裁剪边与布尔关系</td><td>实体/区域绑定材料</td><td>理想基准、规则参数扫描</td><td>复杂粗糙工艺难以紧凑拟合</td></tr>
+<tr><td>密集材料标签</td><td>O(N)</td><td>由格值语义与插值规则定义</td><td>每格编号直接映射</td><td>简单读取、规则数据处理</td><td>展开体积大；硬标签可能丢界面位置</td></tr>
+<tr><td>占比 + 界面信息</td><td>O(N) 或仅边界存附加量</td><td>占比结合平面/交点重建</td><td>每材料占比及界面两侧编号</td><td>保留工艺边界信息、亚网格预处理候选</td><td>需要真实可用的源字段与一致重建算法</td></tr>
+<tr><td>稀疏块 / 树</td><td>O(B) 加树开销</td><td>取决于树中装的是标签、占比还是 SDF</td><td>常数区域与细格属性</td><td>减少几何存储、分块查询</td><td>遍历开销；不等于稀疏场求解</td></tr>
+<tr><td>解析/采样 SDF</td><td>O(P)、O(N) 或窄带规模</td><td>φ=0</td><td>符号与区域映射</td><td>距离、法向、隐式查询</td><td>采样与重初始化误差、多材料表达</td></tr>
+<tr><td>高度场 / 多层界面</td><td>O(NxNy×层数)</td><td>一层或多层高度函数</td><td>高度区间绑定材料</td><td>经检查符合假设的条纹/膜层</td><td>不能任意表示悬垂、孔洞与拓扑变化</td></tr>
+<tr><td>四面体/六面体体网格</td><td>O(节点+单元+连接)</td><td>体单元与边界面共同定义</td><td>单元或区域属性</td><td>FEM/DG 等独立求解路线</td><td>生成与质量控制；不能直接套用 Yee 内核</td></tr>
+<tr><td>神经隐式 / 辐射场</td><td>O(P) 加推理成本</td><td>SDF 可隐式定义；辐射场需另外提取</td><td>必须另行建立物理语义</td><td>未来压缩/反演研究</td><td>训练与误差保证成本，显示目标与电磁目标不同</td></tr>
+</tbody></table></div>
+<p>阅读后续实测时，应始终追问三件事：<strong>来源已经知道了什么；转换额外假设了什么；求解器实际使用了什么。</strong>一份源模型可以同时保留原始体素、用于交换的三角面和用于求解的材料系数缓存。它们承担不同任务，不需要让一个文件包办所有阶段。对本次以 10 nm 位置偏差为重点的研究，选择应由完整误差链和实现成本决定，不能只按最小文件或最好看的截图排序。</p>
+</section>
+
+<section id="hist-overview">
+  <h2 id="heading-029">第二部分 · 我们已经测试过什么：从 468 MB 的二值模型，到可追溯的表面与减面模型</h2>
+  <p>这一部分用我们自己的 AH53 非理想刻蚀结构，把前面的三维表示概念落到实际文件上。它回答三个不同的问题：<strong>文件有没有成功转换？转换后形状改变了多少？转换后的形状能否给出可信的光学位置估计？</strong>现有工作对前两个问题已有不少实验，对第三个问题还没有完成方法之间的收敛比较。因此，下文的“成功导入”“几何误差小”都不直接等于“定位精度已达到 10 nm”。</p>
+  <p>本章依据本机保留的转换清单、几何报告、文件大小、CAD 重开检查和电磁引擎日志重新整理。可下载<a href="evidence/history_metrics.json">历史数值摘录</a>与<a href="evidence/history_provenance.json">来源和 SHA256 清单</a>。后者记录每份原报告相对于 <code>CoventorProjects</code> 的路径及 JSON 字段位置；公开包不包含原模型、供应商程序或许可证。下文所有 MB 均为十进制，即 1 MB = 1,000,000 字节。</p>
+  <div class="callout warning">
+    <p><strong>读表前先记住三件事。</strong>小范围裁剪与完整结构不能直接比较压缩比例；对原工艺模型的误差与对已经转换的 STL 的新增误差不是同一口径；磁盘文件、CAD 几何内存和 FDTD 求解内存是三个不同量。</p>
+  </div>
+
+  <h3 id="hist-source">2.1 实验对象：一份模型，两个不同的信息来源</h3>
+  <p>主要输入是教学用 AH53 非理想硅刻蚀结果：保护条纹保留下来，周围硅被刻蚀。完整研究区域为 <strong>16 × 28 × 1 μm</strong>，含一组三条结构；工艺体素间距为 <strong>20 nm</strong>，对应 <strong>800 × 1400 × 50 = 56,000,000 个体素</strong>。300 nm 是配方中的名义刻蚀总深度，非理想工艺下实际沟底会随位置变化，不能把这份几何描述为所有位置都精确高出 300 nm。</p>
+  <p>原始 <code>AH53_Si_300nm_Nonideal/AH53_Si_300nm_Nonideal.vdata</code> 为 2,012,729 字节。它保存材料编号和混合体素的材料占比，但<strong>没有保存 PlaneEquations，即体素内部界面平面信息</strong>。另外，原工艺工程还保存了第 7 步的原生 wafer。原生 wafer 和这份 VDATA 不能视为完全等价的信息包：导出文件没有保存的界面信息，之后仅凭该文件无法唯一恢复。</p>
+  <p>这一区别产生了两条实际走过的路线。早期从已保存 wafer 直接导出原生表面，是借助仍然存在的工艺结果；后期通用转换器从独立 VDATA 开始恢复原生模型、再导出表面，不依赖原工程。后者的事后误差检查可以读取原 wafer 作为参考，但这不代表转换器使用了它。两条路线的结果都需要介绍，却不能在讲“任意独立 VDATA 转换”时混为一谈。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>来源</th><th>转换时能访问什么</th><th>实际完成的路线</th><th>对用户需求的意义</th></tr></thead>
+    <tbody>
+      <tr><td>已保存的原生 wafer</td><td>原生工艺模型；可以另导出带平面信息的 crop</td><td>Native Simple、Native Standard、带 PlaneEquations 的小范围原型</td><td>适合仍持有原工程时提取表面；不证明仅靠原 VDATA 就能做同样的事</td></tr>
+      <tr><td>独立 VDATA</td><td>文件实际保存的材料、占比、坐标等信息</td><td>二值导入、占比等值面；独立 SDK 导入后导出 OBJ/STL</td><td>更符合“拿到一个受支持格式的 VDATA 就能转换”的目标；不能补回缺失信息</td></tr>
+    </tbody>
+  </table></div>
+  <p class="source-note">数值证据：<a href="evidence/history_metrics.json">history_metrics.json</a> 中 <code>binary_full</code>、<code>native_probe</code>、<code>standalone_vdata</code>；来源定位见 provenance 的同名组。</p>
+</section>
+
+<section id="hist-binary">
+  <h3 id="heading-031">2.2 最先打通的路线：VDATA → 三维二值数组 → MAT → Lumerical</h3>
+  <p>最容易理解的做法是给空间每个小格子贴一个标签：有硅写 1，空气写 0。Lumerical 的 <code>importbinary2</code> 可以把这样的三维数组变成一个几何对象，再给这个对象指定 Si 的光学材料。我们的第一版确实完成了这条链路，并不是把文件后缀从 <code>.vdata</code> 改成 <code>.mat</code>。</p>
+  <ol>
+    <li><strong>读取容器。</strong>从 XML 读取网格数、体素间距、原点和材料映射；将文本中的 Base64 编码还原为字节，识别 <code>!zlib!</code> 压缩块，再逐块解压。该文件实际读到 2564 个压缩块。Base64 是让字节能装进文本的编码，zlib 才负责压缩。</li>
+    <li><strong>读出占比。</strong>本例体素记录包含两个材料编号和一个占比编码。<code>ff=129</code> 表示单材料；其他相应记录用 <code>ff/128</code> 表示材料 1 占比。这里的 0.6 表示一个格子约有 60% 的体积由该材料占据，并不说明这 60% 在格子左侧还是右侧。</li>
+    <li><strong>选择主材料。</strong>第一版采用 <code>ff ≥ 64</code> 选材料 1，否则选材料 2。至此，“60% 硅”变成“硅”，而“40% 硅”变成“空气”。这是明确的信息损失步骤。</li>
+    <li><strong>建立坐标与补边。</strong>采用原体素中心作为采样位置，在每轴两端各补一个零值样本，使外围有明确的空气侧。800×1400×50 因此变成 802×1402×52。</li>
+    <li><strong>保存、导入、复查。</strong>将掩模以 float64 数组交给 Lumerical，原生保存为 MAT 7.3/HDF5，重新加载核对，再执行二值导入、指定 Si Palik 材料、保存 FSP 并重开检查。</li>
+  </ol>
+  <p>补边不是装饰。例如 X 方向原中心为 16.01…31.99 μm；补零后是 15.99…32.01 μm。平直的 0→1 过渡在中点达到 0.5，可落回 16 μm 的几何边界。但斜壁、角点和多方向过渡会受到插值影响，不能把这种中点解释推广为“每个体素立方体都无损保留”。</p>
+
+  <h4>为什么约 2 MB 的 VDATA 变成约 468 MB？</h4>
+  <p>补边后的掩模有 58,469,008 个样本。每个 float64 数值占 8 字节，仅掩模主体就是 <strong>467,752,064 字节</strong>。加上坐标和容器信息，实际 MAT 是 <strong>467,773,472 字节</strong>；保存的 FSP 是 <strong>468,240,893 字节</strong>。膨胀来自三个同时发生的变化：压缩数据被展开、只需表达 0/1 的数用 8 字节保存、整块空间都显式写入稠密数组。</p>
+  <p>这说明当时的接口路径对本例很不经济，不能据此断言“体素天然比三角网格大 200 倍”。同一个二值数组可以打包成位；材料标签可以用较短整数；均匀区域可以压缩、分块、按需读取。但是，如果导入接口最终仍要求完整 float64 数组，文件层的节省会在这一步被重新展开。<strong>文件格式允许什么、接口接受什么、求解器内部存什么，需要分别看。</strong></p>
+  <p>几何上也出现了代价：材料占比被预先截断，侧壁变化更容易受 20 nm 格子相位影响。这个例子的硅总体积仅从 347.312849 变为 347.302456 μm³，变化约 −0.00299%，看起来极小；但总量接近不能保证局部边界接近。左右不同位置的增减可能互相抵消，而定位算法恰好对这些不对称变化敏感。</p>
+  <p>本路线已验证全范围几何导入、材料、坐标和保存重开。FSP 中当时的 FDTD 区域只是一条用于截面检查的薄窗口，<strong>没有覆盖并求解完整 mark 的光学问题</strong>。查看 index preview 所见的离散边界也不等于求解器使用的完整共形材料处理；之后另取真实共形 index，确认二值对象同样能够参与共形处理。共形算法可以处理导入的边界，但不能自动找回此前已经丢弃的占比信息。</p>
+  <p class="source-note">原报告项目相对路径：<code>AH53_FDTD_Import/full/manifest.json</code>、<code>full/verification.json</code>；摘录见<a href="evidence/history_metrics.json">binary_full</a>。我们没有把“逐体素创建一个长方体”或“逐层堆叠二维轮廓”作为已完成的独立方案；已有数据切片和截面画图不能算这类几何导入实验。</p>
+</section>
+
+<section id="hist-surfaces">
+  <h3 id="heading-032">2.3 保留占比再找表面：marching cubes 做了什么</h3>
+  <p>第二种尝试避免先把占比变成 0/1。把每个体素的硅占比看成一个标量样本，相邻样本之间插值，再寻找数值等于 0.5 的位置；这些位置连起来就是一个等值面。可以把它想成在一张逐渐从黑变白的图中寻找灰度恰好一半的线，三维情况下得到的是面。</p>
+  <p><strong>Marching cubes</strong> 的意思是逐个检查由相邻采样点构成的小立方单元：根据哪些角点大于阈值、哪些小于阈值，决定表面从哪些边穿过，再用若干小三角形连接这些穿过位置。我们使用 Lewiner 版本、步长 1，对原占比取 0.5 等值面，没有进行额外的几何平滑。因为交点可以位于两个样本之间，表面坐标不必只能是 20 nm 的整数倍。</p>
+  <p>但“能产生格子内部坐标”不等于“知道原始格子内真实界面”。体积占比本来是一个格子里的平均份额，把它放到中心点后当作连续场采样，是一种重建约定。两个内部界面不同的格子可能具有相同占比，算法无法仅凭这个数字区分它们。阈值选 0.5 也不自动保证生成的表面逐格保体积。</p>
+  <p>我们在 2.8×2×1 μm 小范围实际生成了 50,807 个顶点、101,610 个三角面，二进制 STL 为 5,080,584 字节，导入 FSP 为 4,121,884 字节。封闭边与朝向检查通过，Si 体积由占比积分的 4.991276 μm³ 变成表面包围的 4.990098 μm³。它比同范围二值 FSP 小一些，却依然有约十万面：marching cubes 沿采样格逐个铺面，平坦区域也可能留下大量小三角形。</p>
+  <p>这个方案把原先部分丢掉的占比信息用于重建，因此本截面的侧壁吻合有所改善。它适合作为一个易实现、可追溯的参考转换器。它的局限也很明确：并非原生界面无损重现，导出 crop 的侧面与底面需要人工闭合，闭合检查不能代替自交检查，更没有光学定位误差的验证。</p>
+
+  <h3 id="hist-plane">2.4 平面信息辅助：更丰富的输入，仍然是重建原型</h3>
+  <p>一个混合格子只有“硅占 60%”时，缺少方向信息；若再给出一个平面，就能够更明确地描述材料从何处切过格子。平面常写成 <code>nx*x + ny*y + nz*z = d</code>，其中向量 n 表示朝向，d 决定位置。但是，x/y/z 是世界坐标还是格子局部坐标、哪一侧是 Si、d 是否带符号，必须核对，不能看到四个浮点数就直接套公式。</p>
+  <p>原文件没有这些平面，所以我们从已经保存的 wafer 另导出一个带 PlaneEquations 的小 crop，并用原生射线查询做局部坐标和方向校验。随后把局部平面在体素中心的有符号距离采样出来：纯空气侧取正、纯 Si 侧取负，混合体素保留检查过的平面符号，再对这个场做零等值面的 marching cubes。</p>
+  <p>这条路线的名字必须准确：它是<strong>“平面辅助的中心标量场重建”</strong>，不是把每一个原生界面平面精确裁剪后拼起来，也不是经证明处处连续、处处具有正确距离的全局 SDF。相邻格子的局部平面可能并不严丝合缝；取中心样本再插值又增加了一层选择。</p>
+  <p>实测得到 100,202 面，STL 5,010,184 字节，FSP 4,071,052 字节。它在所检查的一条截面上比单纯占比等值面更接近原生参考，但文件仍较大，格式约定只在这一 crop 做过经验核验。原型建立时的报告留下“导入待完成”的说明；后续导入报告已证明完成 Si 材料指定、保存重开和截面比较，仍然没有时域求解。读历史文件时要把这两个阶段串起来。</p>
+
+  <h3 id="hist-native">2.5 原生 Simple 与 Standard：厂商导出的表面也要验收</h3>
+  <p>另一条路是让 Coventor 自己从原生模型生成表面网格。这样可省去我们自行猜测占比如何变成界面的步骤，但“原生导出”不是“任何设置都无损”。表面网格仍需有限个顶点和面去近似模型，导出模式和参数会影响它的精细程度。</p>
+  <p>我们分别测试了 Simple 与 Standard。Simple 在 <code>geometryAccuracy=100</code> 时只生成一个很小的网格，小 crop 的 STL 仅 32,028 字节、FSP 469,900 字节；这个 100 是设置值，不能读成“100% 精度”。它在局部侧壁上偏差仍可达约 20 nm。Standard 使用更细致的网格配置，在相同 crop 中约 6116 面，ASCII STL 1,169,933 字节、FSP 684,100 字节，并明显改善所测截面的拟合。</p>
+  <p>Standard 后来扩展到完整三条结构，生成 177,932 面、88,968 个合并顶点；ASCII STL 33,359,103 字节，而 FSP 为 6,875,316 字节。这一对数字同时说明：同样叫 STL，ASCII 与二进制的存储开销可能不同；导入后的 CAD 又会有自己的几何编码。不能只看一种文件后缀，就假设每个三角面在各环节都占同样字节。</p>
+  <p>完整范围共检查 630 个原生侧壁参考点，分布在三条结构、每条 21 个 Y 截面及五个高度，左右两侧均参与比较。Standard 的侧壁横向位置误差 P95 为 4.111 nm、采样最大 6.686 nm，CD 误差采样最大约 10.393 nm。CD 是左右边界位置之差；两边各偏一点，宽度误差就可能比单侧误差大。这仍是有限位置的几何抽查，没有认证全表面距离上界或散射场误差。</p>
+  <p>我们还实际尝试过 Delaunay 网格导出，但安装的许可证没有相应功能，未成功得到该候选。因此它只能记作“尝试受阻”，不能进入成功方法的数值对照。</p>
+
+  <h3 id="hist-crop-table">2.6 在相同小范围里比较：改善体现在哪里</h3>
+  <p>下面统一使用 X=22.6–25.4 μm、Y=−1–1 μm、Z=−0.5–0.5 μm 的 crop。侧壁误差来自 Y=0.01 μm 的 23 个错位高度、左右共 46 个参考点；错开部分体素边界，是为了减轻阈值平台恰好落在采样高度的归属歧义。P95 表示这些已检查点中 95% 的绝对误差不超过该值，不是未检查区域的保证。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>小 crop 方法</th><th>输入文件 MB</th><th>FSP MB</th><th>侧壁 P95 / 采样最大，nm</th><th>验证做到哪一步</th></tr></thead>
+    <tbody>
+      <tr><td>二值掩模</td><td>MAT 6.031</td><td>6.493</td><td>12.791 / 42.189 *</td><td>导入、索引检查；误差口径有特别说明</td></tr>
+      <tr><td>占比 0.5 等值面</td><td>STL 5.081</td><td>4.122</td><td>4.601 / 11.809</td><td>表面和导入检查</td></tr>
+      <tr><td>Native Simple</td><td>STL 0.032</td><td>0.470</td><td>14.122 / 20.455</td><td>表面和导入检查</td></tr>
+      <tr><td>Native Standard</td><td>STL 1.170</td><td>0.684</td><td>2.294 / 4.008</td><td>表面、导入及重开检查</td></tr>
+      <tr><td>平面辅助原型</td><td>STL 5.010</td><td>4.071</td><td>1.634 / 3.283</td><td>局部格式核验、表面及导入检查</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>* 二值这一行是我们对源 0/1 场作线性插值、取 0.5 得到的参考轮廓，不是实测 Lumerical 真实材料边界。</strong>其余候选是直接求三角面与截面的交线。因此该表支持“预二值化会改变局部几何”的判断，不能支持“Lumerical 二值入口必然有 42.189 nm 的边界误差”这种说法。全部候选都没有在这次对照中运行光学时域求解。</p>
+  <figure>
+    <img src="assets/hist_crop_comparison.png" alt="同一小裁剪内五种几何编码的侧壁截面、46点局部误差与保存FSP大小比较" loading="lazy">
+    <figcaption>图 2-1｜已有实验图。上排展示同一 Y 截面的左右侧壁，黑点为原生模型射线查询；橙色曲线是源二值场插值参考，不能等同于 FDTD 真实界面。下排比较该截面的有限采样误差与相同 crop 的 FSP 大小。纵横尺度不同，不能直接从图像角度读真实侧壁角；没有施加图像或几何平滑。</figcaption>
+  </figure>
+  <p class="source-note">数据：<a href="evidence/history_metrics.json">small_crop_comparison、fraction_surface、plane_surface、native_full_accuracy</a>。原比较文件为 <code>AH53_FDTD_Alternatives/surface_accuracy_staggered.json</code>，其中 <code>/cases/*/combined</code> 是表中侧壁误差。</p>
+</section>
+
+<section id="hist-height">
+  <h3 id="heading-036">2.7 为什么没有采用一个高度图来代替三维结构</h3>
+  <p>高度图为每个 (x,y) 只存一个 z 值，好像地形地图：已知地面高度，默认下面都是实体、上面都是空气。这对没有悬空、回入侧壁、孔洞或多重材料交界的单值表面很紧凑。对于主要是平坦基底和浅刻蚀的 mark，它值得检查；但必须先验证实际形貌是否符合这个假设。</p>
+  <p>我们做过原生高度与向下射线查询，保存了高度数组，但没有把高度图路线作为本结构的已验证完整导入。两个原生查询接口在陡壁附近甚至会返回不同高度，因此后续侧壁比较采用方向明确的射线交点，避免把不同接口结果混成同一“真值”。</p>
+  <p>更直接的反例来自体素列：在小 crop 的二值检查里，发现 <strong>41 个列沿 +Z 方向出现空气→Si 的转变</strong>。这意味着某些列并不是“从底部一直实心到某个顶高”。单个高度值无法同时保存下方空气段和上方硅段。只记最高表面可能把这些局部形状填实，从而改变散射。</p>
+  <p>因此现有结果只支持“高度场适用于经过单值性检查的子问题”，不支持用一个高度图普遍替代任意 Coventor 结构。类似地，空间 n,k 导入也只做过接口和适用性调研，没有完成本例的 n,k 数据工程及光学对照，不能放入“实测成功”的名单。</p>
+</section>
+
+<section id="hist-standalone">
+  <h3 id="heading-037">2.8 后来建立的独立 VDATA 转换器：输入来源终于满足可复用要求</h3>
+  <p>用户希望能够拿一个独立 VDATA 转换，不能要求它旁边必须还有原来的工艺结果。为此，后来的程序先检查受支持 VDATA 的结构、单位和材料映射，建立不依赖原工程外部引用的工作副本，让本机 SEMulator3D SDK 读取该文件，再通过原生表面输出获得 OBJ，整理为每种材料对应的二进制 STL、材料清单和 Lumerical 导入脚本。该阶段<strong>不重新执行沉积、曝光或刻蚀</strong>。</p>
+  <p>“工作副本”需要处理原点、外部文件引用和材料别名；记录这些变化很重要。例如当前 STL 顶点采用局部 μm 坐标，清单记录恢复全局位置的平移量为 (16, −14, −0.5) μm。STL 本身不可靠地保存单位或多材料名称，因此一个可靠转换结果应是“几何文件加元数据”，不能把单独 STL 当成全部语义。</p>
+  <p>主例实际产生 <strong>174,966 面、87,485 顶点</strong>，STL 8,748,384 字节，FSP 6,751,518 字节。这是后续共享顶点、压缩、共面合并和 QEM 的共同基准，和上一节直接从原 wafer 得到的 177,932 面 Standard 不是同一个文件。</p>
+  <p>转换器内部恢复的硅体积为 347.312849 μm³，三角表面包围体积为 348.248468 μm³，差约 <strong>+0.2694%</strong>。独立转换完成后，再用原 wafer 做 630 点侧壁参考，P95 为 4.088 nm、采样最大 6.680 nm。报告明确写明：转换没有使用原 wafer，参考查询只发生在转换之后。它证明了流程独立性，也暴露了缺失平面信息与网格近似的代价。</p>
+  <p>这里的“通用”有边界：程序面向已验证的 Coventor VDATA 结构和本机 SDK 支持的版本，且有输入检查；不能把“测试过不同材料、坐标和异常输入”扩大成“任何软件写出的同后缀文件都能无损处理”。没有 PlaneEquations 的输入尤其不能保证恢复原始体素内界面。对我们的课题，保留源文件、单位、材料映射、源 hash 和转换参数，是将来比较方法与定位误差的基础。</p>
+  <p class="source-note">证据：<a href="evidence/history_metrics.json">standalone_vdata</a>；原清单 <code>VDATA_Converter/outputs/AH53_from_vdata/conversion_manifest.json</code>，独立性检查 <code>information_loss_check.json</code>。</p>
+</section>
+
+<section id="hist-lossless">
+  <h3 id="heading-038">2.9 第一类减小方法：不动几何，只去掉重复和压缩字节</h3>
+  <h4>共享顶点：把“重复写坐标”换成“写编号”</h4>
+  <p>两个相邻三角形往往共用两个顶点。STL 仍然在各自记录里重复写这些坐标；索引网格则先列一个顶点表，再让每个三角形写三个顶点编号。例如面 (5,8,12) 只需要读顶点表中第 5、8、12 项。三角形的位置和连法可以完全不变。</p>
+  <p>我们的 174,966 面基准 STL 为 8.748 MB；改为 87,485 个 float32 顶点和 uint32 三角索引，顶点表 1,049,820 字节、面索引 2,099,592 字节，合计裸几何 <strong>3,149,412 字节</strong>。这还没有计入法向、加速结构或程序管理开销。压缩为 NPZ 后为 <strong>1,421,719 字节</strong>，回读三角坐标一致。</p>
+  <p>随后我们把索引数组直接通过 <code>addplanarsolid</code> 送进 Lumerical，想看能否进一步减小 FSP。结果索引版 FSP 为 6,751,535 字节，STL 导入版为 6,751,518 字节，<strong>只差 17 字节</strong>，几何 hash 一致。原因是该安装的 STL 导入过程已经合并重复顶点；在它前面再做同样的去重，并没有再消除一份内部冗余。共享顶点仍有利于我们自己的文件和程序，只是这里没有换来额外的 Lumerical 工程压缩。</p>
+
+  <h4>gzip、NPZ 与 LZMA：无损存档成功，运行内存不会自动随之下降</h4>
+  <p>无损压缩寻找重复或可预测的字节，把它们换成较短的编码，解压时严格还原。对几何来说，必须先说明“无损”的对象：保留顶点、索引和坐标变换，属于几何数据无损；保留 STL 文件头、冗余法向量和所有字节，属于原文件逐字节无损。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>实际测试</th><th>压缩后字节</th><th>回读检查</th><th>使用前需要什么</th></tr></thead>
+    <tbody>
+      <tr><td>原二进制 STL + gzip</td><td>3,627,897</td><td>原文件逐字节一致</td><td>先解压回 STL</td></tr>
+      <tr><td>原 FSP + gzip</td><td>2,508,142</td><td>原文件逐字节一致</td><td>先解压回 FSP</td></tr>
+      <tr><td>共享顶点与索引 + NPZ</td><td>1,421,719</td><td>三角几何一致</td><td>读取数组，再交给前处理器</td></tr>
+      <tr><td>共享数组 + LZMA6 自描述存档</td><td>1,059,637</td><td>顶点、索引、平移等数组逐位一致</td><td>使用我们的解码器；不是厂商原生格式</td></tr>
+    </tbody>
+  </table></div>
+  <p>我们实际比较了 40 种编码组合，包括 float32 位模式的 XOR 差分、按列排列、字节重排，以及整数索引差分，再接 zlib 或 LZMA。相邻数据相似时，这些预处理可能让压缩器更容易发现模式；但本例最好的结果是直接原数组加 LZMA6，说明“算法看起来更复杂”不保证更小。该档压缩约 1.01 秒，解压及校验约 0.102 秒，比原 STL 小 87.89%。</p>
+  <p>实验扩展名 <code>.vmeshx</code> 是我们自己的封装，不能直接被当作 Coventor 或 FDTD 标准文件。它适合传输、归档和自研程序的读取入口；解码后，顶点与索引仍要在内存中展开。即使整个几何文件缩到 1 MB，传播电磁波所需的 E/H 场、材料辅助变量和 PML 也不会因此缩到 1 MB。</p>
+  <p class="source-note">证据：<a href="evidence/history_metrics.json">lossless、entropy、cad_storage</a>；原报告分别位于 <code>VDATA_Optimization/lossless</code>、<code>entropy</code>、<code>storage</code>。</p>
+</section>
+
+<section id="hist-planar">
+  <h3 id="heading-039">2.10 第二类减小方法：严格共面的三角形合成一个多边形</h3>
+  <p>如果很多小三角形真的位于同一个平面，它们内部的分割线只是存储方式，删掉这些内线可以用一个大多边形表达同一块表面。关键是“真的共面”：如果只是看起来很平，合并仍可能移动表面。我们的实验对源 float32 坐标使用精确整数共面判定，只合并严格共面的邻接面；边界点、凹形边界和孔环都要妥善保留。</p>
+  <p>结果 174,966 个三角面变成 <strong>168,281 个多边形面</strong>，仅减少 3.82%；顶点由 87,485 变为 86,703。坐标没有移动，边方向、封闭性检查通过，精确有向体积差为零。这个例子不是由大量完全平面拼成的规则积木：保留刻蚀形貌的表面有大量不严格共面的三角形，所以能合并的比例有限。</p>
+  <p>FSP 从 6,751,518 降到 6,592,807 字节，只减少 2.35%，实测导入阶段 CAD private commit 没有改善。更意外的是，读取不同长度的多边形 facet 时，接口返回全局补齐的 256×2×168281 个 double，即约 689 MB 临时数组；相关查询的 CAD 峰值曾达到约 2.38 GB。虽然实际多边形边界没有这么多有效数值，补齐布局仍会占空间。</p>
+  <p>这次实验体现出一个对自研程序很重要的因素：<strong>几何数学表示更简洁，不保证现有 API 的数组布局更节省内存。</strong>如果自己实现多边形容器，可以使用变长索引和偏移表；但还要承担凹多边形、孔、相交和稳健裁剪的复杂度。当前模型上的收益不足以单凭“面数少一点”就选择它作为首版核心表示。</p>
+  <p class="source-note">证据：<a href="evidence/history_metrics.json">planar、planar.audit、cad_storage</a>。这是与已有 STL 同一表面的重编码，不会修复 STL 相对 VDATA 已有的近似。</p>
+</section>
+
+<section id="hist-qem">
+  <h3 id="heading-040">2.11 第三类减小方法：QEM 用少量几何改变换取更少的面</h3>
+  <p>QEM 是 Quadric Error Metrics，常译为二次误差度量。可以把一个顶点周围的三角面各看成一张平面，记录“新点偏离这些平面多远”的平方代价；尝试把一条边的两个端点合成一个点，并优先执行代价较小的合并。不断合并后，顶点和面变少，原来的形状被较少的三角形近似表达。</p>
+  <p>它和 gzip 有本质区别：QEM 会移动或删除几何自由度，通常不能还原原网格。它和额外表面平滑也不是同一个操作：本次没有运行平滑滤波，但减面本身仍可能改变局部粗糙度、缺口和不对称性。QEM 的内部代价值不是我们课题的定位误差，也不是严格的最大表面距离，所以必须另外验收。</p>
+  <p>本次在同一独立 VDATA 转换基准上测试了七档。表中的“减少 45%”指删除约 45% 的三角面，保留约 55%，不是保留 45%。误差是简化结果相对于<strong>已有基准 STL</strong>的新增偏差；无论这一列多小，都不能把前面约数纳米的 VDATA 重建偏差抹掉。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>减少三角面比例</th><th>剩余面数</th><th>STL MB</th><th>采样双向最大新增距离，nm</th><th>采样范围说明</th></tr></thead>
+    <tbody>
+      <tr><td>0%，原基准</td><td>174,966</td><td>8.748</td><td>0（自身比较）</td><td>已有转换误差并非 0</td></tr>
+      <tr><td>25%</td><td>131,224</td><td>6.561</td><td>0.462</td><td>顶点及面中心</td></tr>
+      <tr><td>45%</td><td>96,230</td><td>4.812</td><td>0.882</td><td>额外加入边中点的更密检查</td></tr>
+      <tr><td>50%</td><td>87,482</td><td>4.374</td><td>1.009</td><td>顶点及面中心</td></tr>
+      <tr><td>60%</td><td>69,986</td><td>3.499</td><td>1.446</td><td>更密检查</td></tr>
+      <tr><td>65%</td><td>61,238</td><td>3.062</td><td>1.658</td><td>更密检查</td></tr>
+      <tr><td>75%</td><td>43,740</td><td>2.187</td><td>3.367</td><td>顶点及面中心</td></tr>
+      <tr><td>90%</td><td>17,496</td><td>0.875</td><td>6.070</td><td>顶点及面中心</td></tr>
+    </tbody>
+  </table></div>
+  <p>“双向”表示既从原网格采样点找简化网格最近距离，也反过来检查，以减少只查一个方向漏掉形状的风险。但有限采样依然可能漏过两个点之间的最大值；45% 档的 0.882 nm 不能写成“任何地方都小于 1 nm”。网格封闭、欧拉特征和面朝向检查也不能证明没有自交。CGAL 的包络约束和有界 Hausdorff 验收属于已调研、尚未本机运行的后续方向。</p>
+  <p>45% 和 65% 候选还检查了截面侧壁与 CD。45% 的采样最大新增侧壁 X 变化约 0.724 nm、CD 变化约 1.021 nm；65% 分别约 1.401 nm、2.135 nm。它们比看起来很小的总体积变化更贴近形貌关注点，但仍不是光学反演位置偏差。特别是左右侧变化方向不同时，微小几何变化也可能改变不对称散射，不能只依据总体积验收。</p>
+  <p>这两个候选实际保存并重新载入 Lumerical。45% FSP 为 3,917,022 字节，65% 为 2,657,310 字节。新隐藏 CAD 会话加载后，private commit 相比空会话的增量从原模型约 81.94 MB 降为 43.59 MB 和 31.28 MB；工作集增量则约为 75.12、38.41、24.67 MB。两种内存计数含义不同，不能混在同一列比较，也都不是求解器电磁场内存。</p>
+  <figure>
+    <img src="assets/hist_optimization.png" alt="原网格和QEM候选的文件大小、CAD工作集、采样几何误差和局部侧壁变化" loading="lazy">
+    <figcaption>图 2-2｜已有优化实验图。B 图报告的是含软件本身的 CAD 工作集，图中项目没有求解域和时域结果；C 图是有限采样观察值，绿色档位比灰色档位采样更密；D 图只是中间条纹在 Z=0.40 μm 的一个局部示例。这些结果证明文件和 CAD 几何负担减小，不证明电磁求解精度或网格内存同比改善。</figcaption>
+  </figure>
+  <p>当前非零 QEM 优化主要验证单一实体材料。多材料若各自独立简化，同一界面可能被两边分别移到不同位置，形成缝隙或重叠。<code>preserve_border</code> 保护的是网格开边；闭合硅外壳没有开边，开启它不等于保护了材料共界面、每个粗糙度峰和所有细小缺陷。多材料路线需要共享界面或显式约束，不能直接套本次百分比。</p>
+  <p class="source-note">数据：<a href="evidence/history_metrics.json">qem、qem_candidates、cad_storage</a>；原来源为 <code>VDATA_Optimization/qem/summary.json</code>、<code>optimization_summary.json</code>、<code>storage/storage_comparison.json</code>。</p>
+</section>
+
+<section id="hist-solver">
+  <h3 id="heading-041">2.12 真正运行过电磁求解的是哪些测试</h3>
+  <p>前面的多种格式比较主要发生在几何前处理与 CAD 阶段。后来资源研究在 <strong>45% QEM 模型</strong>上加入了光源、PML、监视器和 FDTD 区域，才实际运行两个短时性能测试。光源是中心 532 nm、20 fs 时间脉冲的 Gaussian 光束，从上方向下入射、X 偏振；监视器只记录 532 nm。中心波长和单个记录频率不意味着时间脉冲在数学上严格单频。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>名义均匀网格</th><th>实际网格维度</th><th>实际物理推进时间</th><th>墙钟时间</th><th>实测峰值 RAM</th><th>按短跑推测 1 ps</th></tr></thead>
+    <tbody>
+      <tr><td>40 nm</td><td>404×704×107</td><td>约 100 fs</td><td>233.724 秒</td><td>3.532 GB</td><td>约 27.98 分钟</td></tr>
+      <tr><td>60 nm</td><td>278×478×79</td><td>约 100 fs</td><td>70.335 秒</td><td>1.387 GB</td><td>约 7.39 分钟</td></tr>
+    </tbody>
+  </table></div>
+  <p>这两次使用 CPU、一个进程和八线程，100 fs 测试关闭自动提前终止以便计时。40 nm 的墙钟中，初始化约 65.11 秒、推进约 160.64 秒，其余用于保存等；60 nm 则约 22.90 秒初始化、41.61 秒推进。1 ps 一列只是相同设置下的外推，不是已经完成的 1 ps 求解。</p>
+  <p>其他 30、20、15、10、5 nm 以及局部渐变网格档位是预检内存与时间估计，没有都实际分配并运行。40 nm 在 Si 中约只有 3.2 个点覆盖材料内波长，现阶段只适合说明性能规模；没有完成网格、PML、时长或材料拟合精度的收敛验收。它们也不能证明 45% QEM 相比原网格的光学误差足够小，因为没有做同设置、同收敛条件下的配对光学比较。</p>
+  <p>把这一结果和前面的 3.917 MB 几何工程放在一起看，差别就很直观：一个几 MB 的 FSP，运行时可以需要几 GB。求解器还要保存整个计算域中的电磁场、材料系数、色散辅助变量、吸收边界和监视器数据。压缩文件或减少表面面数，主要降低读取、几何查询和建模成本；是否能降低场内存，最终取决于所需电磁网格和数值算法，而不是 STL 有几 MB。</p>
+  <p class="source-note">数值来自<a href="evidence/history_metrics.json">fdtd_performance</a>；原始汇总路径为 <code>AH53_FDTD_RunStudy/results.json</code> 的 <code>/benchmarks</code>。各项实际运行与外推在证据文件中分别标明。</p>
+</section>
+
+<section id="hist-meaning">
+  <h3 id="heading-042">2.13 这些历史实验对 10 nm 定位课题意味着什么</h3>
+  <p>现有证据已经足够说明：第一版二值导入的文件膨胀不是无法避免的；表面表示、共享顶点、无损存档和适度减面都有各自可测的价值。现有证据也说明，不能把几何误差数字直接替换成定位精度数字。一个 6 nm 的边界误差究竟造成 0.1 nm、1 nm 还是更大的反演偏差，要由光场、照明、收集光路和估计方法的敏感性决定。</p>
+  <p>对主目标 10 nm，首要任务不是继续把所有文件压到最小，而是建立同一输入、相同物理条件下可重复的参考结果，测量不同表示给位置估计增加多少偏差。1 nm 和 0.1 nm 应当作为更严格的后续档位；20 nm 工艺采样仍可以在数学上施加 1 nm 甚至更小的刚体平移，但这不代表它已经包含相应尺度的真实刻蚀形貌。要分别检验“计算已定义模型的小位移”与“模型本身对真实器件的准确性”。</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>现有证据支持的结论</th><th>尚不能推出的结论</th><th>自研 FDTD 下一步应验证</th></tr></thead>
+    <tbody>
+      <tr><td>独立 VDATA 可经已验证 SDK 路线生成可导入表面</td><td>任意 VDATA 版本都无损；缺失信息可以自动恢复</td><td>输入契约、材料映射、界面重建与异常文件处理</td></tr>
+      <tr><td>索引网格和压缩可大幅降低存档大小</td><td>场数组内存自动同幅下降</td><td>分阶段记录读入、几何前处理、场分配及峰值</td></tr>
+      <tr><td>QEM45 的有限采样新增距离约 0.882 nm</td><td>全表面误差小于 1 nm；定位误差小于 1 nm</td><td>更严格几何验收、粗糙度保持及位置估计配对误差</td></tr>
+      <tr><td>两个粗网格短跑提供了实际性能参考</td><td>已完成可靠光学结果；已验证所有输入方式等价</td><td>几何表示、边界处理、网格与时长共同收敛</td></tr>
+    </tbody>
+  </table></div>
+  <p>后续两条实现路线都应沿用这份证据边界：表面路线以未减面的可追溯网格作为起点，体素路线明确标签、占比和平面信息各自保存了什么；两者最终都要对接自研求解器的材料离散。在相同物理模型上比较恢复的位置偏差，才能判断哪个方案在我们的精度目标和工作站资源下更合适。</p>
+</section>
+
+<section id="fdtd-decision" class="chapter">
+  <p class="eyebrow">面向本课题的工程选择 · 研究与方案，尚未完成新电磁验收</p>
+  <h2 id="heading-043">第三部分 · 从三维文件到自研 FDTD：真正需要保留下来的是什么</h2>
+  <p><strong>当前最实用的起点，是把未经减面的原生转换 STL 与材料、单位和坐标元数据作为首个三维入口，同时保留读取富体素的第二个入口。求解内核接收经过验证的 Yee 网格材料系数，避免让内核直接依赖某一种文件后缀。</strong>这是一项针对现有文件和代码的工程建议，不是“STL 天生比体素准确”的定理。若将来能够可靠取得 Coventor 的材料分数、界面平面及其语义，直接从富体素生成求解系数可能更忠实，也可能更快。</p>
+  <p>选型的验收指标是<strong>最终读出的位置变化</strong>，主目标为 10 nm，并单独讨论 1 nm 与 0.1 nm 的更严格档位。文件大小、读入时间、峰值内存、曲面距离、体积误差都是辅助指标。它们帮助发现问题，却不能单独证明位置偏差已达标。本章给出的误差预算、架构和实验矩阵均为待执行方案；这次调研没有新增电磁求解结果。</p>
+  <div class="callout"><p>当前数据有三个必须保留的事实：原始 VDATA 的工艺体素为 20 nm；这个文件没有导出 <code>PlaneEquations</code>；原生表面导出本身是近似过程。因此，“未减面 STL”是减面比较的基准，不等于未经近似的真实晶圆。</p></div>
+</section>
+
+<section id="fdtd-layers">
+  <h2 id="heading-044">先分清四层：文件、几何、离散材料、电磁场</h2>
+  <p>把三维结构交给程序，可以类比把一张建筑图交给施工队：图纸的压缩格式、墙面的位置、地面划分的测量格子，以及每个格子上测到的量，是四件不同的事。对应到本课题：</p>
+  <ol>
+    <li><strong>文件层：</strong>VDATA、STL、HDF5 等负责把数据放进磁盘。文件可压缩、可分块；文件越小，不代表后续所有计算都越小。</li>
+    <li><strong>几何层：</strong>回答“空间中的这一点属于 Si 还是空气”“两种材料的界面在哪里”。三角面、标签体素、体积分数、解析实体都是不同回答方式。</li>
+    <li><strong>离散材料层：</strong>根据本次计算网格，确定各个场分量如何看见材料和界面，生成更新系数、界面修正、色散模型索引。</li>
+    <li><strong>场与读出层：</strong>逐时间步推进 E、H 及辅助变量，再提取复反射场，经光学读出得到位置。决定求解内存的大部分数组位于这一层。</li>
+  </ol>
+  <pre class="flow">STL + 元数据 ──→ 三角表面查询 ─┐
+                              ├─→ 几何到网格映射 ─→ 材料更新系数 ─→ Yee 时域推进 ─→ 复场 ─→ 位置
+富体素 + 元数据 → 体素/界面查询 ─┘
+       ↑ 原始来源可不同                 ↑ 算法要验证                 ↑ 不必知道原来是哪个后缀</pre>
+  <p>两份输入若在同一计算域、同一网格上生成完全相同的材料系数，使用相同的源、PML、监视器和时间推进算法，后面的场求解成本应基本相同。差异通常留在读取、预处理、几何内存和生成系数的时间。只有当更好的界面表示让我们在较粗网格上达到同一位置误差，才会进一步降低求解成本。这是本报告的工程推论，应通过对照实验验证。</p>
+</section>
+
+<section id="fdtd-yee">
+  <h2 id="heading-045">Yee 网格究竟是什么，为什么 STL 不是 FDTD 的计算网格</h2>
+  <p>常见 FDTD 把空间分成规则或分级的长方体网格，在不同位置保存 Ex、Ey、Ez、Hx、Hy、Hz。电场与磁场在时间上也交错更新：先由附近电场的变化计算磁场，再由附近磁场的变化计算电场。Lumerical 官方明确其 FDTD 使用笛卡尔网格和交错的 Yee 场分量；STL 只是导入几何的一种方式。<a href="https://optics.ansys.com/hc/en-us/articles/360034914633-Finite-Difference-Time-Domain-FDTD-solver-introduction">来源：Ansys FDTD 求解器说明</a>。</p>
+  <p>例如，在均匀、无损、各向同性材料内，某个 Ex 更新可概念性写为下面的形式。它只用于解释数据依赖；真正实现还要处理索引偏移、源项、边界、色散与数值稳定性。</p>
+  <pre>Ex(新) = Ex(旧) + Δt / (ε₀ εr) × [ΔHz/Δy − ΔHy/Δz]</pre>
+  <p>这里使用的是相邻场数值的差，不是三角面的大小或顶点编号。三角面可用于判断界面穿过了哪个格子、穿过多少，但在普通 Yee 内核中不会让程序“沿着 STL 三角形逐面传播光”。如果选择四面体有限元、非结构有限体积或 DGTD，则属于另一类空间离散方案，程序的数据布局和稳定性分析也会改变，不能只换扩展名就获得。</p>
+  <h3 id="fdtd-two-grids">工艺体素与电磁网格不能强行一一对应</h3>
+  <p>Coventor 的 20 nm 体素描述工艺模型的空间离散。FDTD 的 10、20 或 40 nm 网格描述光的数值传播。二者的原点、范围、尺寸和每个数据值的采样位置可以不同。FDTD 还需要上方空气、衬底延伸、光源、监视器和吸收边界；所以只数 VDATA 内的体素，会低估整个光学计算域。</p>
+  <p>还有一个容易忽略的半格偏移：体素数组的数据可能代表小方块的<strong>中心</strong>，也可能代表格点处的<strong>采样值</strong>。把“角点原点”当作“第一个中心”，会在每个相关方向引入半个体素的平移。20 nm 数据上的半格就是 10 nm，已经等于本课题第一档位置目标。格式协议必须写清楚 <code>origin_kind</code>，不能只写“原点”。</p>
+  <p>把 FDTD 网格缩到 1 nm，可以更细致地求解给定几何，却不会自动恢复工艺文件中已经丢失的 1 nm 粗糙度。反过来，20 nm 的工艺采样也不意味着位置读出只能按 20 nm 跳变：若界面模型可信，可连续平移这个模型，再用亚网格映射表示其位置。连续移动模型与恢复未知物理细节是两种不同能力。</p>
+</section>
+
+<section id="fdtd-boundary">
+  <h2 id="heading-047">最影响精度的一步：把材料边界映射到 Yee 网格</h2>
+  <p>想象一面倾斜的 Si 侧壁穿过一个计算格子。格子的一部分是 Si，另一部分是空气。若只看格子中心属于哪种材料，侧壁稍微移动时，整个格子可能保持不变；越过中心后，又突然全部改变。这种离散跳变会给 CD、相位和位置扫描带来非物理变化。解决它，需要知道“界面怎样穿过格子”，不能只说“导入成功”。</p>
+  <div class="table-scroll"><table><thead><tr><th>方法</th><th>它实际做什么</th><th>需要的数据</th><th>主要限制</th></tr></thead><tbody>
+    <tr><td>单点材料判定</td><td>在各场采样位置确定一个材料 ID</td><td>标签查询或实体内外判定</td><td>容易形成阶梯；小位移可能不改变任何系数</td></tr>
+    <tr><td>子采样体积分数</td><td>把一个格子再取多个样点，估算各材料所占比例</td><td>可多次查询的几何</td><td>采样本身有误差；有比例仍不等于有正确电磁更新式</td></tr>
+    <tr><td>三角面与单元相交</td><td>通过表面相交获得界面位置、方向及局部分区</td><td>可靠、定向、封闭的表面及材料两侧定义</td><td>薄层、共享界面、自交和近退化交点需要稳健处理</td></tr>
+    <tr><td>体积分数 + 法向 + PLIC</td><td>在界面格子内重建一张切分平面</td><td>分数 f、单位法向 n，以及网格坐标</td><td>一张平面不能表示同格内的多个分离界面或复杂曲率</td></tr>
+    <tr><td>共形/亚像素材料映射</td><td>利用局部界面信息构建更符合 Maxwell 边界条件的更新</td><td>上述几何量及适用的材料模型</td><td>需要验证稳定性、色散、高反差、角点与多材料交会</td></tr>
+  </tbody></table></div>
+  <p>前四行解决“界面在哪里”；最后一行进一步解决“电磁场应该如何跨过这个界面”。把几何分数算准确，并不自动得到正确的共形 FDTD。</p>
+  <h3 id="fdtd-plic">为什么只有“占 30%”还不够</h3>
+  <p><code>f=0.3</code> 只告诉我们这个格子里 Si 的体积占 30%。这 30% 可以在左侧、右侧、顶角，也可以被分成两块。PLIC（分片线性界面重建）额外用一个方向 n，寻找切平面 <code>n·r=α</code>，使其切出的体积正好匹配 f。已知法向后，由分数反求平面位置有成熟几何算法。它是一种局部重建约束，不是从单个分数唯一找回原表面的魔法。<a href="https://www.sciencedirect.com/science/article/pii/S0021999100965677">来源：Scardovelli 与 Zaleski，2000</a>。</p>
+  <p>当前 VDATA 缺少界面平面信息。如果从邻近分数估算法向，应在数据中标记 <code>normal_source=estimated</code>，保存估计方法和尺度。不能把估计法向命名为 Coventor 原始法向。在尖角、薄膜、双侧壁靠得很近的格子里，单一 f 与 n 的模型可能不够，需要多界面描述、局部加密，或回退到可验证的表面表示。</p>
+  <h3 id="fdtd-tensor">“混合材料”为什么不能只平均折射率</h3>
+  <p>对局部近似平面的两种无损、非色散、各向同性介质，电场沿界面的分量与垂直界面的分量满足不同边界关系。常见亚像素方案因此采用方向相关的等效介电常数：沿界面为算术平均，垂直界面为谐均值，再按法向旋转回全局坐标。合理设计可以减少倾斜界面的阶梯误差；锐角的场奇异性仍会影响收敛。<a href="https://opg.optica.org/ol/abstract.cfm?uri=ol-31-20-2972">来源：Farjadpour 等，Optics Letters，2006</a>。</p>
+  <pre>ε∥ = f ε₁ + (1−f) ε₂
+ε⊥ = 1 / [f/ε₁ + (1−f)/ε₂]
+εeff = ε∥ (I − nnᵀ) + ε⊥ nnᵀ</pre>
+  <p>这里 n 是长度为 1 的法向，I 是单位矩阵，<code>nnᵀ</code> 表示取出法向分量的投影。这个三乘三矩阵叫“张量”：本来各自没有方向偏好的两种材料，在一个被界面切开的数值单元内，也可能需要方向相关的等效响应。一般各向异性界面的处理还更复杂，不能机械套用两个标量平均式。<a href="https://journals.aps.org/pre/abstract/10.1103/PhysRevE.77.036611">来源：Kottke、Farjadpour 与 Johnson，2008</a>。</p>
+  <p>用于理解的数值例子：若 ε₁=12、ε₂=1、f=0.5，则 ε∥=6.5，而 ε⊥≈1.846。两者相差很大。用一个“平均 n”同时处理所有场方向，会忽略这种边界条件差异。实现时还应围绕各 Yee 电场分量的实际采样位置计算相应系数，不能把格子中心的一组数直接无区别复制给 Ex、Ey、Ez。</p>
+  <p>“共形”通常指计算方法考虑了未与笛卡尔格线重合的材料边界，并不意味着所有小方格都被换成了贴合表面的弯曲网格。具体方法可能使用长度、面积、分数、法向或等效张量；不同软件采用的“共形”并非完全同一个算法。</p>
+</section>
+
+<section id="fdtd-dispersion">
+  <h2 id="heading-050">我们的 Si 在 532 nm 有吸收：为什么这会改变算法选择</h2>
+  <p>几何只告诉程序“这里是 Si”。电磁计算还需要 Si 怎样响应光。复折射率写为 <code>n+iκ</code>，介电常数为 <code>εr=(n+iκ)²</code>；κ 描述吸收。532 nm 的真实 Si 不能随意当作折射率 2 的透明演示材料。</p>
+  <p>时域中的色散意味着材料的响应带有记忆。常见方法用若干极化辅助变量 P 描述这段记忆，随 E、H 一起推进，这类实现常称 ADE。多加一个色散项，通常就要增加相应的状态和计算。材料表中的 n、κ 需要拟合成适合时域的响应模型；一个频率上的复数不能直接当作任意宽带瞬时更新常数。<a href="https://meep.readthedocs.io/en/latest/Materials/">来源：Meep 材料与极化方程</a>。</p>
+  <p>上一节的无损介质平均式不能不加论证地当作色散 Si 的完整实现。特别是法向谐均值会改变频率响应的函数形式，时域实现可能需要额外状态或不同界面公式。Meep 当前文档说明其亚像素平滑只处理瞬时介电项，色散贡献不进行这一平滑，不能据此保证色散边界也保持同样的收敛阶；文档还列出局部平面、角点和材料函数成本等限制。<a href="https://meep.readthedocs.io/en/latest/Subpixel_Smoothing/">来源：Meep 亚像素平滑适用范围</a>。</p>
+  <p>Lumerical 的共形方法则有不同的实现和范围。官方说明它可处理两种色散介质的界面，并在同一单元出现两种以上材料时回退到阶梯处理；不同 variant 对金属和 PEC 的策略也不同。因此，不能把 Meep 某种亚像素方法的限制扩展成“所有共形算法都不能处理吸收”，也不能把 Lumerical 的能力当成几行平均代码已经实现。<a href="https://optics.ansys.com/hc/en-us/articles/360034382614-Selecting-the-best-mesh-refinement-option-in-the-FDTD-simulation-object">来源：Ansys 网格细化选项</a>。</p>
+  <div class="callout"><p><strong>本地已有一个具体提醒：</strong>532 nm 性能试跑保存的材料库值约为 n=4.150104、κ=0.043935；时域拟合值约为 n=4.149922、κ=0.048182。κ 的相对差异约 9.67%。这不是本次重新测量的材料数据，也不直接等于位置误差，但说明“材料拟合误差”必须进入位置敏感性测试。只比较 STL 和体素，而忽略这个差异，可能把材料误差错误归因于几何格式。</p></div>
+</section>
+
+<section id="fdtd-lumerical">
+  <h2 id="heading-051">Lumerical 为什么提供 STL 入口，它还考虑了哪些因素</h2>
+  <p>Lumerical 并没有只选择 STL。需要区分不同入口保存的是什么信息：</p>
+  <div class="table-scroll"><table><thead><tr><th>入口</th><th>传入内容</th><th>材料如何指定</th><th>本课题最要注意的事</th></tr></thead><tbody>
+    <tr><td>STL</td><td>物体的显式三角表面</td><td>导入后给对象分配材料；多材料通常分别导入</td><td>文件本身没有可靠的物理单位和完整材料映射，要携带外部元数据</td></tr>
+    <tr><td>Binary spatial / importbinary2</td><td>对象存在/不存在的 0/1 空间数组</td><td>每个导入对象分配材料</td><td>非零输入按 1 处理；不能直接用 0.3 表示“30% Si”</td></tr>
+    <tr><td>Spatial n,k</td><td>空间折射率分布</td><td>响应本身写入数据</td><td>官方入口针对单频空间数据，不能替代完整多材料色散数据库</td></tr>
+    <tr><td>解析对象、平面实体等</td><td>尺寸参数、多边形或其他几何边界</td><td>对象关联材料</td><td>适合可用少量参数准确描述的结构；不应为了统一格式强行三角化所有平面层</td></tr>
+  </tbody></table></div>
+  <p>STL 在 Lumerical 中导入后按平面实体处理。其价值在于显式保存边界，可以在后续改变计算网格、整体位置或姿态时再次求交，而不必先把形状绑定在某个求解网格上。官方同时指出 STL 缺少长度单位、多面片会增加加载显示成本、多材料需要对应对象。<a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object">来源：Ansys STL 导入说明</a>。</p>
+  <p>二值导入也不能简单概括成“原封不动的小积木”。官方说明会对二值数据插值，并以 Binary Threshold 定义边界，默认阈值为 0.5；视口不一定显示求解边界的全部细节，应通过 index monitor 核对。因此，比较时要记录二值采样位置、阈值和实际材料网格。<a href="https://optics.ansys.com/hc/en-us/articles/360034382754-Binary-spatial-data-Simulation-object">来源：Ansys Binary spatial data</a>。传入任意非零数都会被视为 1 的接口约定见 <a href="https://optics.ansys.com/hc/en-us/articles/360034929013-importbinary2-Script-command">importbinary2 官方命令</a>。</p>
+  <p>Spatial n,k 的单频限制应单独理解：它不意味着“所有体素形式都不能使用色散材料”。以几何掩模建立对象、再给对象指定色散材料，与直接导入一个频率的 n,k 场，是不同路线。<a href="https://optics.ansys.com/hc/en-us/articles/360034901993-Spatial-n-k-data-Simulation-object">来源：Ansys Spatial n,k</a>。</p>
+  <p><strong>可合理推断的工程考虑：</strong>显式表面便于 CAD 交换、任意网格重建、连续刚性变换和界面查询；数组入口便于成像或已栅格化结构；解析对象便于参数扫描。统一接到材料网格，使用户能够选择最接近其原始信息的入口。我们不能声称知道厂商内部到底用了哪种 BVH、三角相交容差或特定的闭源系数构造；官方明确其共形实现含专有修改。<a href="https://optics.ansys.com/hc/en-us/articles/360034382594-Understanding-Mesh-Refinement-and-Conformal-Mesh-in-FDTD">来源：Ansys 共形方法背景</a>。</p>
+</section>
+
+<section id="fdtd-current-code">
+  <h2 id="heading-052">我们的现有程序处在哪一步</h2>
+  <p>以下来自本次对本地 README、实现代码和历史记录的只读核对，不把目录名当成功能证据。详细来源保存在 <a href="evidence/solver_context.json">solver_context.json</a>。</p>
+  <div class="table-scroll"><table><thead><tr><th>项目</th><th>已经有的基础</th><th>尚未成为正式能力</th><th>适合复用什么</th></tr></thead><tbody>
+    <tr><td>MarkSim</td><td>WSL Meep；二维周期 Jones；材料与几何协议；理想自参考信号和位置解调；小型三维无损体素冒烟</td><td>任意非理想三维体素 → 完整三维散射 → 有限 Mark 位置读出</td><td>参考场归一化、相位约定、光路、位置指标、来源记录和对照算例</td></tr>
+    <tr><td>MarkSimFDTD</td><td>Windows NumPy + fdtd 0.3.5；二维周期矩形截面；真实时域推进和双偏振复反射矩阵</td><td>三维工艺表面、通用亚像素、宽带 ADE、有损 PML 组合；此分支没有位置模块</td><td>可读的 Yee 入门实现、基本求解管线、接口与错误检查</td></tr>
+    <tr><td>FDTD-core-reconstruction</td><td>本次仅查到工具目录</td><td>该目录内没有可验证的源码或 README</td><td>不能据此断言已经存在第三套三维内核，也不能断言其他位置不存在</td></tr>
+  </tbody></table></div>
+  <p>特别要分清<strong>上游库能力</strong>与<strong>本地适配器能力</strong>。flaport/fdtd 官方项目本身提供三维和可选 GPU 后端；本机 MarkSimFDTD 的实际代码固定 NumPy，并建立 <code>(nx+1,nz,1)</code> 的二维网格。改一个后端名称，不会自动补齐三维散射投影、真实 Si 吸收、界面处理和位置读出。<a href="https://github.com/flaport/fdtd">来源：flaport/fdtd 官方仓库</a>。</p>
+  <p>MarkSim 的三维冒烟使用了材料函数、无损介质和 <code>eps_averaging=False</code>，检查过材料查询和有限场传播；它没有完成三维 Jones 或位置收敛。现有二维适配器的限制也不代表 Meep 求解器本身没有三维能力。</p>
+  <h3 id="fdtd-upgrade-options">渐进升级与新架构如何比较</h3>
+  <div class="table-scroll"><table><thead><tr><th>路线</th><th>工程价值</th><th>最主要的新增工作</th><th>建议定位</th></tr></thead><tbody>
+    <tr><td>扩展 MarkSim / Meep 适配</td><td>成熟时域内核可用于构建独立对照，保留现有读出规范</td><td>可靠三维几何与色散接口；近远场/角谱输出；有限照明读出；网格收敛</td><td>三维参考和算法研究平台；须核实其界面平滑适用域</td></tr>
+    <tr><td>扩展 MarkSimFDTD</td><td>代码容易逐段理解，便于验证更新方程和数据流</td><td>三维布局、色散/PML、通用界面系数、性能优化与位置模块接回</td><td>教学与小算例基线；不能直接承诺大尺度三维生产性能</td></tr>
+    <tr><td>新三维内核 + 复用现有应用层</td><td>从一开始按三维内存、CPU/GPU与边界数据设计</td><td>完整数值验证、稳定性、边界、材料、监视与资源管理</td><td>若三维工艺扰动与大量扫描是长期主线，值得并行评估</td></tr>
+  </tbody></table></div>
+  <p>建议保留现有两个分支作为基线，新建稳定的“几何到网格”接口，然后用同一组小算例决定哪条求解路线继续。无需为了开始比较 STL 与体素，先从零写完所有商业级求解功能；也不宜把二维代码改到能够运行，就宣称三维研究平台已经完成。</p>
+</section>
+
+<section id="fdtd-intermediate">
+  <h2 id="heading-054">建议的数据协议：双几何入口，一个可追溯的中间层</h2>
+  <p>下面是<strong>拟议协议</strong>，并非声称当前程序已经输出这些文件。目的在于把 Coventor 专有读取、几何计算、材料模型和 FDTD 内核分开，允许独立检查每一步。</p>
+  <pre>model/
+  manifest.json          # 单位、坐标、材料表、哈希、来源与误差说明
+  geometry.h5            # 可有 surface、voxel、interfaces 多种表示
+  materials.json         # 光学材料名称、表格来源、有效波段与模型
+  mapping_cache/         # 可重建的几何到网格结果，按完整键值缓存
+  validation/            # 非对称轴序样例、截面、体积、边界与来源检查</pre>
+  <div class="table-scroll"><table><thead><tr><th>内容</th><th>最低应保存的信息</th><th>为什么需要</th></tr></thead><tbody>
+    <tr><td>坐标与长度</td><td>明确单位；右手坐标；x 跨条纹、y 沿条纹、z 向上；局部到全局变换；体素角点/中心语义</td><td>防止尺度差 1000 倍、轴互换、镜像或半格平移</td></tr>
+    <tr><td>表面</td><td>顶点数组、索引三角面、法向方向、界面两侧材料 ID、边界/裁剪标签</td><td>STL 缺少的信息由协议补齐；共享界面只能有一个一致几何定义</td></tr>
+    <tr><td>体素</td><td>shape、spacing、origin、轴序、标签类型、背景 ID；必要时分块</td><td>可直接查标签，也能以块方式读取而不一次展开全体</td></tr>
+    <tr><td>富界面数据</td><td>材料分数、法向、平面偏移、材料对、来源为原生/估计、算法和精度记录</td><td>保留亚体素信息，明确哪些信息经过推断</td></tr>
+    <tr><td>材料</td><td>ID → 名称 → n,k 来源 → 时域拟合；波段、单位、温度/模型条件（已知时）</td><td>ID 不是折射率，也不能对材料编号做线性插值</td></tr>
+    <tr><td>来源与质量</td><td>原 VDATA 哈希、导出版本、平面字段是否存在、裁剪、表面提取和减面参数</td><td>区分原始信息、重建误差与减面附加误差</td></tr>
+  </tbody></table></div>
+  <p>HDF5 可用于数值数组与分块压缩，JSON 可用于便于人工检查的元数据。分块能配合局部读取；压缩比取决于内容和分块方式。这是存储选择，不会自动让动态 E、H 数组也变成稀疏。<a href="https://portal.hdfgroup.org/documentation/hdf5/latest/hdf5_chunking.html">来源：HDF Group 分块说明</a>。</p>
+  <h3 id="fdtd-cache">应缓存的是可重用计算，不是错误地复用旧结果</h3>
+  <p>几何缓存至少应包含：几何内容哈希、坐标变换、实际 x/y/z 网格坐标、网格原点、界面算法版本、容差、材料拓扑。若缓存的是几何分数和法向，更换光学材料时可重用几何部分；若缓存的是已合成的更新系数，还必须包含材料拟合、时间步长和相应数值选项。不能只用“文件名相同”判断可复用。</p>
+  <p>扫描波长时，几何可能不变，但材料模型会变；改变 FDTD 网格时，几何可以复用，映射必须重算；刚性平移时，表面局部坐标可以复用，变换和映射要更新；只改观察图的颜色，不应触发电磁重算。这些区别会比节省几个 STL 字节更直接地影响大量研究任务的总时间。</p>
+  <p>对于共面层与大块衬底，可保留解析几何；复杂侧壁用表面或富体素。不要把无穷平面衬底强行细分成海量小面，也不要为每个体素创建一个 Python 对象。建议底层使用批量数组和块查询，让 Python 负责调度与检查，避免在每个时间步对每个场点回调 Python 几何函数。</p>
+</section>
+
+<section id="fdtd-cost">
+  <h2 id="heading-056">文件小、几何内存小与求解内存小，分别怎么获得</h2>
+  <p>读入前压缩、索引顶点、RLE 或稀疏块，主要减少几何存储。对普通全域 FDTD，空气里也有入射光和散射光，空气不是可以直接删掉的“空数据”。几何只在边界附近复杂，不代表场只存在于边界附近。</p>
+  <div class="table-scroll"><table><thead><tr><th>想省什么</th><th>优先方法</th><th>不会自动获得的收益</th></tr></thead><tbody>
+    <tr><td>磁盘和传输</td><td>无损压缩、索引网格、分块、去掉可再生中间物</td><td>不自动减少 Yee 网格数量</td></tr>
+    <tr><td>几何预处理峰值</td><td>流式读取、块查询、BVH、只存界面细节、避免多份稠密副本</td><td>不自动免除场数组或 PML 状态</td></tr>
+    <tr><td>时域内存</td><td>合理裁剪域、可验证降维/对称、较粗但达到精度的网格、限定监视器、精度与布局优化</td><td>每项均需符合物理问题；不能任意删空气、粗化薄膜或删弱阶</td></tr>
+    <tr><td>运行时间</td><td>减少必要网格/步数、复用预处理、内存带宽优化、CPU/GPU、合适的批量任务调度</td><td>面片减少比例不等于时域加速比例</td></tr>
+  </tbody></table></div>
+  <h3 id="fdtd-memory-arrays">内存里到底装了哪些东西</h3>
+  <p>粗略地写，<code>M = M场 + M系数 + M色散 + MPML + M监视器 + M几何 + M临时</code>。六个实数单精度场数组的最简下限约为 <code>6×4×N=24N</code> 字节；实际算法可能还保存 D、B、极化历史和边界辅助量。Bloch、复场或不同数值方案也可能增加存储。不能用这个下限充当完整内存估算。</p>
+  <p>以原工艺域的 800×1400×50=5600 万格为纯数组示例：uint8 材料标签约 56 MB，float32 分数约 224 MB，六个 float32 场约 1.344 GB。它们仅说明数量级。实际 FDTD 域比工艺域更大；当前 NumPy 分支又使用双精度，因此不能用 1.344 GB 宣称整个 AH53 三维任务能在这个内存内完成。</p>
+  <p>色散变量可只分配到需要的材料区域，PML 变量可只分配到吸收层，非对角界面系数可尝试只为边界块保存。它们是值得做的工程优化，但稀疏索引、分支和不连续访问也有成本。须测量真实峰值与推进速度，不能预先保证“只存界面就快”。</p>
+  <h3 id="fdtd-cpu-gpu">CPU 与 GPU：先管数据搬运，再谈计算峰值</h3>
+  <p>Yee 更新会反复读取附近场、系数，再写回场。建议新内核采用便于连续遍历的数组布局，少建临时大数组；GPU 线程应尽量访问连续地址，并减少主机与设备间反复传输。NVIDIA 官方将合并访存列为重要优化原则，但具体结构布局仍要对本内核实测。<a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/">来源：CUDA Best Practices Guide</a>。</p>
+  <p>GPU 显存和主机 RAM 是两笔容量账。几何预处理、保存监视器和后处理仍可能使用 CPU/RAM；多 GPU 还需要域分解和边界交换，不能把几张显卡的显存简单当作无代价的大池子。Ansys 的资源说明也分别统计主机内存与 GPU 内存，并要求实际日志核对。<a href="https://optics.ansys.com/hc/en-us/articles/360046368573-Running-FDTD-simulations-from-the-design-environment">来源：Ansys 内存检查说明</a>。</p>
+  <p>float32 能减小数组与带宽需求，但长期积累的弱阶复振幅、相位差和消去误差未必满足 1 nm 或 0.1 nm 档位。可研究“场单精度、DFT 累积和读出双精度”的混合方案；它是待验证选项，应和全双精度基线比较。GPU 核心数和宣传峰值不能替代代表性算例的吞吐测试。</p>
+</section>
+
+<section id="fdtd-scaling">
+  <h2 id="heading-059">为什么网格减半，计算通常远不止翻倍</h2>
+  <p>对固定三维物理体积，均匀网格步长 h 减半，三个方向各多一倍格子，数量约变成 8 倍。显式 Yee 的稳定时间步还受最小空间步长限制：在简单均匀无色散情况，可用下式理解其数量级，材料和实际实现还可能引入更严格限制。</p>
+  <pre>Δt ≤ 1 / [vmax √(1/Δx² + 1/Δy² + 1/Δz²)]
+固定物理时长 T：Nstep ≈ T/Δt
+三维均匀缩放：网格数 ∝ h⁻³，时间步数 ∝ h⁻¹，总推进量 ∝ h⁻⁴</pre>
+  <p>因此网格减半通常意味着约 8 倍内存和 16 倍推进工作量。真实运行还包含初始化、PML、监视器、材料状态和硬件效率，不能直接据此报精确分钟数。官方也给出三维内存约 h⁻³、时间约 h⁻⁴ 的关系。<a href="https://optics.ansys.com/hc/en-us/articles/360034382594-Understanding-Mesh-Refinement-and-Conformal-Mesh-in-FDTD">来源：Ansys 网格资源关系</a>。</p>
+  <p>局部细化可减少细格数量，但若使用统一全局时间步，最细格仍会约束全域 Δt。真正使用不同局部时间步、亚网格交界或非结构离散，需要额外的稳定性、界面反射和能量检查。八叉树可以是很好的几何压缩方式；把八叉树直接用于电磁更新则是另一个数值研究任务，不能把两种用途合并宣传。</p>
+  <p>PML 是人工吸收层，目的是模拟波离开有限计算盒子。它有自身的空间厚度和状态，不是简单把外圈场强设为零。应改变厚度、距离或相关参数，检查目标复场与位置读出是否稳定；监视面应位于物理区域。<a href="https://meep.readthedocs.io/en/latest/Perfectly_Matched_Layer/">来源：Meep PML 原理与验证说明</a>。</p>
+</section>
+
+<section id="fdtd-existing-resources">
+  <h2 id="heading-060">已有 AH53 实测说明了什么，以及工作站应怎样规划</h2>
+  <p>下面数字从已有 <code>AH53_FDTD_RunStudy/results.json</code> 提取，<strong>不是本次新增运行</strong>。结构为 45% 减面工程，532 nm、−Z 入射、X 偏振、3 μm 腰斑；CPU 8 线程。原机器快照为 Ryzen 7 H 260（8 核 16 线程）、可见内存 33.60 GB（31.29 GiB）、RTX 5060 Laptop 8151 MiB 显存。这份研究实际使用 CPU。</p>
+  <div class="table-scroll"><table><thead><tr><th>网格设置</th><th>内存检查器估计，GB</th><th>实测峰值，GB</th><th>100 fs 实际墙钟</th><th>状态</th></tr></thead><tbody>
+    <tr><td>均匀 60 nm</td><td>1.085</td><td>1.387</td><td>70.34 s</td><td>已完成性能试跑；未证明光学收敛</td></tr>
+    <tr><td>均匀 40 nm</td><td>2.999</td><td>3.532</td><td>233.72 s</td><td>已完成性能试跑；未证明光学收敛</td></tr>
+    <tr><td>均匀 30 nm</td><td>6.437</td><td>—</td><td>—</td><td>检查器估计</td></tr>
+    <tr><td>均匀 20 nm</td><td>19.764</td><td>—</td><td>—</td><td>检查器估计</td></tr>
+    <tr><td>均匀 15 nm</td><td>44.766</td><td>—</td><td>—</td><td>检查器估计</td></tr>
+    <tr><td>均匀 10 nm</td><td>144.058</td><td>—</td><td>—</td><td>检查器估计</td></tr>
+    <tr><td>均匀 5 nm</td><td>1099.404</td><td>—</td><td>—</td><td>检查器估计，约 1.10 TB</td></tr>
+    <tr><td>表面 20 nm 分级网格</td><td>13.485</td><td>—</td><td>—</td><td>检查器估计；须再验实际细化范围</td></tr>
+    <tr><td>表面 10 nm 分级网格</td><td>49.672</td><td>—</td><td>—</td><td>检查器估计；须再验实际细化范围</td></tr>
+  </tbody></table></div>
+  <p>60 nm 和 40 nm 同网格从 100 fs 外推至 1 ps，历史估计分别约 7.39 分钟、27.98 分钟；没有实际完成这两个 1 ps 运行，自动结束或更长衰减需求都可能改变时长。40 nm 在该 Si 折射率下每内部波长约只有 3.2 格，完成性能试跑绝不意味着可以用于 10 nm 位置结论。GB 采用十进制；GiB 采用 2³⁰ 字节。</p>
+  <h3 id="fdtd-capacity-planning">容量分档是实验规划，不是硬件购买或速度承诺</h3>
+  <div class="table-scroll"><table><thead><tr><th>规划容量</th><th>与已有任务的数量级关系</th><th>适合先安排的工作</th></tr></thead><tbody>
+    <tr><td>现有约 32 GiB RAM / 8 GiB 显存</td><td>适合小区域和较粗网格；完整细网格余量受其他进程及预处理峰值影响</td><td>接口、平面薄膜、二维对照、小型三维和几何映射测试</td></tr>
+    <tr><td>约 64–128 GiB RAM</td><td>对 20/15 nm 及部分分级方案有更多主机容量空间</td><td>较完整三维收敛序列；先记录真实峰值再安排并发</td></tr>
+    <tr><td>约 256 GiB RAM</td><td>可把 10 nm 约 134 GiB 的检查器量级纳入候选，仍须留预处理/系统余量</td><td>完整域细网格参考及几何方法对照，时间成本仍可能很高</td></tr>
+    <tr><td>更大内存或多节点</td><td>5 nm 检查器本身已约 1 TiB，不能把 1 TiB 装机量当作足够</td><td>只有更粗方案无法达到位置目标时，再研究域分解、局部细化或替代离散</td></tr>
+    <tr><td>24/48/80 GiB 等显存档位</td><td>仅是待测容量档；CPU 估计不能直接换算成 GPU 所需显存</td><td>为所选内核单独测量 GPU 峰值、主机峰值、带宽与整任务时间</td></tr>
+  </tbody></table></div>
+  <p>这些档位不等于“买到后能跑多快”。已有数据属于 Lumerical CPU，不能直接给新内核标价或推断 GPU 加速倍数。代表性任务应分别计时几何读取、网格构造、时域推进、数据收集和读出。官方 GPU 说明也区分 GPU 求解与仍在 CPU 上运行的操作。<a href="https://optics.ansys.com/hc/en-us/articles/17518942465811-Getting-started-with-running-FDTD-on-GPU">来源：Ansys GPU 求解说明</a>。</p>
+</section>
+
+<section id="fdtd-observable">
+  <h2 id="heading-062">课题真正的输出：10 nm 位置偏差意味着什么</h2>
+  <p>位置来自光学信号，不是从 STL 包围盒中心直接读出来。要评价转换方法，必须明确同一个真实或建模位置，经过不同几何入口后，最终读出改变多少。建议把三种量分别报告：</p>
+  <ul>
+    <li><strong>真实工艺形貌引起的偏差：</strong>不对称刻蚀等改变了散射，导致读出位置相对几何基准偏移。这可能正是研究对象。</li>
+    <li><strong>表示与求解引入的附加偏差：</strong>同一个形貌因转换、减面、网格和材料离散而得到不同读出。这是需要控制的数值误差。</li>
+    <li><strong>实际测量系统误差：</strong>真实照明、镜组、噪声、标定与材料不确定性等。当前理想光路并没有覆盖全部因素。</li>
+  </ul>
+  <p>在既有二维周期、正入射、理想 ±m 级自参考读出合同中，整体刚性位移 d 可写成 <code>rₘ(d)=rₘ(0) exp(−i2πmd/L)</code>，配对相位变化为 <code>Δφₘ=−4πmd/L</code>。因此 <code>Δxₘ=−LΔφₘ/(4πm)</code>，符号由既有时间/空间约定和已知位移验证确定。它只确定模 <code>L/(2m)</code> 的位置，不能无条件确定有限 Mark 的绝对中心。</p>
+  <div class="table-scroll"><table><thead><tr><th>示例位置档位</th><th>L=16 μm、m=5 时对应配对相位变化</th><th>含义</th></tr></thead><tbody>
+    <tr><td>10 nm</td><td>约 0.03927 rad = 2.25°</td><td>第一档端到端数值目标；尚未由本次方法比较验收</td></tr>
+    <tr><td>1 nm</td><td>约 0.003927 rad = 0.225°</td><td>材料、参考面、几何重建和弱信号问题更难忽略</td></tr>
+    <tr><td>0.1 nm</td><td>约 0.0003927 rad = 0.0225°</td><td>需要独立检查浮点累积、参考真值与模型不确定度，不是换更细文件即可</td></tr>
+  </tbody></table></div>
+  <p>表中数值是由公式算出的量级，不是说复矩阵每个元素都必须统一小于这个相位误差。弱衍射阶的相位可能没有可靠意义；实际位置权重、参考相位误差和多个通道的相关性都应参与判定。应保留复幅度和有效性标记，不用单独的反射率接近代替位置正确。</p>
+  <h3 id="fdtd-finite-mark">有限三维 Mark 与有限光斑，为什么不能照搬周期公式</h3>
+  <p>当前 Coventor 结构有条纹端部、沿 y 的不均匀侧壁和工艺示例中建模的三维粗糙度；既有 532 nm 工程又用有限高斯束。这时整个光斑与结构的相对位置会改变被照区域及散射角谱。简单地给周期离散级次乘一个整体平移相位，未必等价于把这个有限结构在固定光斑下移动。</p>
+  <p>三维研究需建立明确的读出算子：从近场得到规定参考面的复场或角谱，应用给定 NA、偏振和光路，再生成扫描信号并拟合位置。比较格式时必须固定同一算子、参考面、扫描坐标和基准结构。若真实光路尚未完全定义，可以采用公开声明的理想读出，但应把它称为模型读出偏差，不扩大成真实机台位置误差。</p>
+  <p>二维周期算例仍非常有价值：它便宜、相位律明确，适合查单位、符号、网格平移和基本界面算法。它不能替代有限三维 Mark 的最终验收。反过来，也无需一开始就用最昂贵的完整模型排查一个半格坐标错误。</p>
+</section>
+
+<section id="fdtd-error-budget">
+  <h2 id="heading-064">10 nm 目标的误差预算：先作为设计分配，再由实验调整</h2>
+  <p>下面给出一个可讨论的<strong>保守分配方案</strong>。每一项都指该环节造成的<strong>最终位置读出变化</strong>，单位虽为 nm，但不是把表面距离误差直接相加。各项相关性不明确时，不应未经论证使用均方根相加来获得更好看的总数。</p>
+  <div class="table-scroll"><table><thead><tr><th>环节</th><th>拟分配位置误差上限</th><th>怎样单独评估</th></tr></thead><tbody>
+    <tr><td>源几何到可交换几何的重建</td><td>2 nm</td><td>与带更完整界面信息或更细原生导出的受控基准比较</td></tr>
+    <tr><td>可选减面</td><td>1 nm</td><td>同一求解设置下，减面与未减面几何端到端比较；无减面时该项不消耗</td></tr>
+    <tr><td>材料界面与空间网格</td><td>3 nm</td><td>网格收敛、网格原点相位和独立映射算法交叉检查</td></tr>
+    <tr><td>时间终止、PML 与域范围</td><td>1 nm</td><td>分别改变一项，观察复场与位置读出</td></tr>
+    <tr><td>光学材料数值拟合</td><td>1 nm</td><td>在同一几何下比较已验证材料响应模型</td></tr>
+    <tr><td>场提取、读出、数值精度</td><td>1 nm</td><td>参考面变换、已知平移、采样加密、双精度复核</td></tr>
+    <tr><td>余量</td><td>1 nm</td><td>留给未完全分离的耦合项</td></tr>
+  </tbody></table></div>
+  <p><strong>这张表没有证明总误差已经小于 10 nm。</strong>目前既没有为所有环节建立相应位置上界，也没有完整有限三维读出真值。工艺参数是否准确代表实物、显微测量和材料实验误差，还应另列模型不确定度；不能把未校准的工艺示例包装成 10 nm 实物预测。</p>
+  <p>已有未减面 STL 对原生体积约大 0.2694%；fraction-only 重建与原 native 的 630 个有效侧壁采样点比较，横向 RMS 约 1.612 nm、最大绝对差约 6.680 nm。这些是特定几何检查，既不是全表面的严格界，也不是位置读出误差。它们足以说明原生表面提取不能忽略，却不足以宣布上述 2 nm 位置预算失败或通过。</p>
+  <p>1 nm 与 0.1 nm 档位不能只把表里数字机械除以 10 或 100。需要先重新评估源模型是否有足够信息、参考误差是否更小、材料和读出是否可辨识。若同一源数据允许多个合理亚体素界面，它们给出的读出差异已经超过目标，应报告信息不足，优先补足源信息。</p>
+</section>
+
+<section id="fdtd-validation-plan">
+  <h2 id="heading-065">建议的验证矩阵：让“哪种输入更好”成为可重复结果</h2>
+  <p>每个比较必须保留输入、配置、算法版本、实际网格、源与监视器位置、材料模型、硬件、时间、峰值内存，以及复场和读出结果。以下是待执行的实验计划，不是已完成记录。</p>
+  <div class="table-scroll"><table><thead><tr><th>阶段</th><th>受控变化</th><th>检查内容</th><th>失败时说明什么</th></tr></thead><tbody>
+    <tr><td>A. 最小几何与材料</td><td>空气、平面 Si、薄膜、已知倾斜平面、薄层/间隙、非对称三维块</td><td>单位、轴序、角点/中心、体积、边界位置；Fresnel/薄膜参考；实际离散材料</td><td>接口或基础物理未通过，不进入大 Mark 比较</td></tr>
+    <tr><td>B. 同源不同表示</td><td>未减面表面、标签体素、可靠富体素；同一物理域和材料</td><td>先比较生成的系数，再比较复反射与位置；分别记录预处理和求解资源</td><td>区分几何信息差异与数值映射差异</td></tr>
+    <tr><td>C. 网格收敛</td><td>例如 40→30→20→15→10 nm，按资源与收敛情况选择</td><td>目标位置、强弱阶复系数、时间/PML独立稳定性</td><td>不能只凭某两档偶然相近宣布收敛</td></tr>
+    <tr><td>D. 网格原点相位</td><td>网格相对同一物理问题移 0、h/4、h/2、3h/4；逐轴及必要组合</td><td>位置读出对网格位置的非物理波动；源、监视与边界保持相同物理定义</td><td>界面映射或源/采样误差对网格位置敏感</td></tr>
+    <tr><td>E. 独立已知位移</td><td>真的移动几何并重新求解，例如 ±10、±1、±0.1 nm 和较大校准位移</td><td>恢复量、偏差、斜率；与适用情况下的解析相位律对照</td><td>不能用给旧矩阵乘相位的代数闭合代替此实验</td></tr>
+    <tr><td>F. QEM 减面</td><td>0%、45%、65% 等已保存版本；固定所有其他参数</td><td>附加位置变化、截面/CD/粗糙度变化、面片与映射时间</td><td>几何距离小不保证读出误差小，失败版本不能当生产默认</td></tr>
+    <tr><td>G. 代表性非理想</td><td>侧壁倾斜、圆角、欠刻/过刻、左右不对称、沿 y 粗糙、薄膜与多材料接缝</td><td>是否保留研究所需扰动；不同粗糙度实例的敏感性</td><td>不能从一个平滑单材料样本推广“任意 VDATA 都准确”</td></tr>
+    <tr><td>H. 有限三维与读出</td><td>完整 ROI、光斑位置/腰斑、NA、参考面和扫描采样</td><td>固定读出合同下的位置；域/PML/时长/精度交叉验证</td><td>判断周期近似是否足以回答最终课题</td></tr>
+  </tbody></table></div>
+  <h3 id="fdtd-grid-phase-detail">网格相位与真实位移要分开</h3>
+  <p>网格相位测试只改变数字坐标格相对同一物理问题的摆放，理想连续答案应保持不变。真实位移测试则在固定照明和物理参考下移动结构，答案本来就可能变化。二者如果混在一起，有限光斑造成的真实响应变化可能被错误叫作网格误差，或者网格造成的位置跳变被当成真实信号。</p>
+  <p>实现网格相位测试时，不能只移动对象而忘记源和监视器的物理含义。需要将连续源、采样面、边界距离分别映射到新网格，记录实际偏移；如无法保持完全相同，先用均匀参考测试量化附带改变。测试应尽量采用不对称形状，以免镜像抵消掩盖错误。</p>
+  <h3 id="fdtd-reference-quality">怎样获得足够强的参考</h3>
+  <p>未减面 STL 只能作为“减面附加误差”的基准。验证源重建需更完整 native 信息或受控解析形状；验证求解需更细网格、独立边界算法、解析解或另一已收敛求解器。多个软件如果共享同一错误 STL，也可能彼此吻合，不能据此证明原始工艺几何已忠实保留。</p>
+  <p>既有 Lumerical benchmark 对照记录中，达到<strong>复反射系数参考自身 10⁻³ 收敛阈值</strong>的参数点为 4/26；这不是 10 nm 位置验收通过率。未通过的点可用于诊断，不应据此当作 1 nm 或 0.1 nm 位置真值。另一个历史 Meep 测试仅针对<strong>36 点/μm 的二维周期 AH53_DEMO、合成无损材料案例</strong>：真实移动几何 +100 nm 后重新求解，读出约 +98.52 nm，对应约 −1.48 nm 偏差。它不是当前 532 nm 实际 Si 材料的 Coventor/VDATA/QEM 工程，该结果不能推广为三维非理想 Mark 的位置精度。解析平移旧矩阵得到的极小浮点恢复误差则只检查代数；“公式正确”和“离散计算位置足够准”必须分别验证。</p>
+</section>
+
+<section id="fdtd-recommendation">
+  <h2 id="heading-068">落地顺序：把格式选择变成可检验的工程决定</h2>
+  <ol>
+    <li><strong>冻结来源：</strong>保留原 VDATA、native 结构与未经减面的转换结果及哈希。明确当前缺失的平面字段和表面提取近似。</li>
+    <li><strong>建立双入口协议：</strong>先让现有未减面 STL 稳定进入；同时为标签、分数和可靠界面信息保留字段。多材料必须有材料两侧及共享界面规则。</li>
+    <li><strong>先验证几何到网格：</strong>用平面、薄膜、斜面和非对称块检查边界位置与实际系数，再连接小型三维电磁算例。</li>
+    <li><strong>单独决定内核：</strong>比较现有分支升级与新三维实现，优先补齐色散、PML、场提取和可追溯读出；由基准决定 CPU/GPU 和存储布局。</li>
+    <li><strong>先达到 10 nm 档：</strong>以固定物理模型的最终位置变化验收，报告所有失败和未收敛项；达到后才把 1 nm、0.1 nm 作为下一档。</li>
+    <li><strong>最后采用有损优化：</strong>45%/65% 减面、较粗网格、混合精度等必须分别计算对位置的附加影响。通过的优化组合才进入默认流程。</li>
+  </ol>
+  <p>对当前数据，显式未减面表面是一个可立即检查和迭代的入口；对于保留可靠亚体素界面的数据，富体素路线同样有竞争力。决定后续成本与可信度的，是<strong>保留了多少界面信息、如何把它转成材料更新系数，以及最终位置是否收敛</strong>。未来即使改变文件容器，也应保持这三件事可以独立核查。</p>
+</section>
+
+<section id="workshop">
+<h2 id="heading-069">第四部分 · 用计算器把选型问题落到数量级</h2>
+<h3 id="heading-070">1. 先问内存存的是什么，再问文件多大</h3>
+<p>以下计算器采用 15.2 × 27.2 × 3.3 μm 的示例内部区域，每个方向再增加两侧各 12 层 PML 教学网格。它是一套透明的简化计算，未调用 Lumerical checker，也不是对任意自研代码的内存承诺。实际网格端点、PML 位置、局部加密和额外数组会使单元数不同。</p>
+<div class="demo"><div class="controls"><label>均匀网格 <input type="range" id="calc-h" min="5" max="60" step="5" value="20"><output id="calc-h-value">20 nm</output></label><label>假定字节/单元 <select id="calc-bytes"><option value="48">48 B：较少辅助数组</option><option value="96" selected>96 B：中间示例</option><option value="192">192 B：较多辅助数组</option></select></label></div><div class="controls"><label>系统内存 <select id="calc-ram"><option value="32">32 GiB</option><option value="64">64 GiB</option><option value="128" selected>128 GiB</option><option value="256">256 GiB</option><option value="512">512 GiB</option></select></label><label>单卡显存 <select id="calc-vram"><option value="8">8 GiB</option><option value="16">16 GiB</option><option value="24">24 GiB</option><option value="48" selected>48 GiB</option><option value="96">96 GiB</option></select></label></div><div class="demo-result" id="calc-result" aria-live="polite"></div><p class="small">24 B/单元仅为 6 个实数 float32 场分量的算术下限，忽略交错网格边界计数差异。48/96/192 B 都是用户可变的教学假定，涵盖的系数、ADE、PML与监视器需按实现重新清点；不等于任一产品真实每单元开销。CFL 取真空三维均匀网格系数 0.99，特定共形或色散实现还可能有更严格稳定性约束。容量有余量也不证明能在可接受时间内完成。</p></div>
+<p>工作站升级最先改变的是“能装下哪些问题”，速度仍要实测。CPU 增加核心数后可能遇到内存带宽限制；GPU 的显存容量与运算吞吐是两个指标；两张 24 GiB 显卡也不自动变成一个可直接使用的 48 GiB 地址空间。多卡方案要实现域分解、边界场交换和负载分配。相关算法与官方资料见第三部分。</p>
+<h3 id="heading-071">2. 从位置预算回推相位预算</h3>
+<p>已有 MarkSim 的周期理想自参考模型使用 Δx = −LΔφ/(4πm)。这里的 Δφ 是收集到的 ±m 配对自参考信号的谐波相位相对参考的变化，不是单个衍射级的光学相位；位置存在 L/(2m) 的模周期歧义，需要确定参考与相位展开分支。下面默认 L = 3.2 μm、m = 1，作为对应条纹尺度的教学例。有限 mark 配合有限高斯光斑的完整读出，应单独定义相位或图像估计方法，不能直接套用本计算器作为验收。</p>
+<div class="demo"><div class="controls"><label>周期 L / μm <input id="phase-period" type="number" min=".01" step=".1" value="3.2"></label><label>级次 m <select id="phase-order"><option>1</option><option>2</option><option>3</option></select></label><label>位置误差目标 <select id="phase-target"><option value="10" selected>10 nm（重点）</option><option value="1">1 nm</option><option value="0.1">0.1 nm</option></select></label></div><div class="demo-result" id="phase-result" aria-live="polite"></div><p class="small">公式来源为本项目的测量定义，见 <a href="evidence/solver_context.json">求解分支和测量协议证据</a>。低幅值衍射级次的相位对噪声更敏感，仅规定相位误差还不足以构成完整的测量鲁棒性要求。</p></div>
+<h3 id="heading-072">3. 如何阅读已有数字</h3>
+<figure><img src="assets/resource_memory.svg" alt="历史各网格的Lumerical内存checker估计，以及40和60纳米两点实际短跑峰值"><figcaption>图 · 历史项目的 checker 内存估计与两次 100 fs 短跑的实际峰值分开绘制；纵轴使用对数刻度。图中不是新的基准测试，也不是位置精度达标曲线。数据见 <a href="evidence/resource_metrics.json">resource_metrics.json</a>。</figcaption></figure>
+<figure><img src="assets/storage_comparison.svg" alt="同一全范围结构的文件大小：原VDATA、二值MAT与FSP、原始及减面STL、压缩索引数组"><figcaption>图 · 同范围存储比较，使用十进制 MB 与对数轴。原始 VDATA、不同中间格式及 FSP 的数据语义不同；原生表面和减面包含重建或近似，不能把所有柱子都称为无损压缩。<a href="evidence/history_metrics.json">历史数据</a>。</figcaption></figure>
+<h3 id="heading-073">4. 课题下一步的推荐顺序</h3>
+<ol><li><strong>冻结可追溯基准。</strong>保留原始 VDATA、导出设置和 native wafer 的历史参考；几何基准使用当前未减面表面及材料/坐标元数据。记录工艺模型未校准、缺失 PlaneEquations 等条件。</li><li><strong>建立求解器自己的几何协议。</strong>同时允许显式表面和富体素入口，统一单位、轴、材料身份、位置与界面查询结果。把文件读取从时间推进内核中分开。</li><li><strong>先验证边界与材料映射。</strong>用平面、斜壁、圆角、薄膜等可控例子确认原点、体积、界面位置、多材料优先级；在光学上用已有解析/高精度参考检查反射复振幅。</li><li><strong>建立最小三维闭环。</strong>在小范围工艺几何上验证吸收 Si、PML、源、监视器与读出；区分周期测试和有限 mark 测试。当前二维链路只能提供部分组件。</li><li><strong>以 10 nm 位置偏差验收。</strong>分别扫描计算网格、网格相位、真实几何位移、PML距离与层数、仿真时长和材料拟合，再比较体素/表面入口。无可靠参考时报告成对差异和剩余不确定性，不把“彼此接近”当作真值。</li><li><strong>把减面纳入同一验收。</strong>依次比较 0%、25%、45%、65% 等可控档位，保留相同照明、读出和收敛条件。可以先用局部几何和高敏感区域加速筛选，再用代表性完整工况验证。</li><li><strong>最后扩大规模与优化内核。</strong>根据实测内存、初始化和步进时间，选择 CPU/GPU、工作站容量、缓存与域分解。扩展到 1 nm、0.1 nm 前重新检查工艺输入信息、参考值和误差预算是否足够。</li></ol>
+<div class="callout"><strong>本次调研能做出的决定</strong><p>当前项目采用“保留源数据、以未减面显式表面搭建可验证的首版三维入口、给富体素保留统一接口”的工程路线最容易利用已有成果。最终是否启用减面、哪一种输入更节省总成本，要由同一测量链路上的精度—资源对照决定。历史数据尚未证明任一路线已达到 10 nm 位置偏差。</p></div>
+</section>
+<section id="glossary"><h2 id="heading-074">附录 · 术语和常见问题</h2>
+<div class="table-scroll"><table><thead><tr><th>词语</th><th>初学者可以怎样理解</th><th>本课题中需要注意</th></tr></thead><tbody>
+<tr><td>体素 voxel</td><td>空间被分成许多小格；每格保存标签或数值。</td><td>格里可以存材料、占比、密度、距离；这些不是同一种数据。</td></tr><tr><td>面片 facet / triangle</td><td>用小平面拼成外表面；三角形由三个点确定。</td><td>三角面数与电磁网格单元数是两套计数。</td></tr><tr><td>拓扑 topology</td><td>哪些点、边、面相连，哪里有孔或独立部件。</td><td>表面位置看似相近，也可能因破洞、自交或连通关系变化而成为不同实体。</td></tr><tr><td>法向 normal</td><td>垂直于局部表面的方向。</td><td>决定内外侧，也参与一些界面平均方法；占比本身不能唯一给出法向。</td></tr><tr><td>水密 watertight</td><td>像完整外壳，没有漏边。</td><td>仅闭合不能排除所有自交、错误材料分配或非流形问题。</td></tr><tr><td>占比 fraction</td><td>一格中某材料所占体积的比例。</td><td>不能直接当作折射率，也不能直接交给把非零视为1的二值接口。</td></tr><tr><td>等值面 isosurface</td><td>三维数值场中值恰好等于某个阈值的一层面。</td><td>阈值和采样位置改变会改变提取表面。</td></tr><tr><td>QEM</td><td>按局部几何代价选择折叠边的减面方法。</td><td>常规代价不是严格最大表面误差，更不是位置测量误差保证。</td></tr><tr><td>BVH</td><td>把表面按包围盒分层，快速排除不可能相交的区域。</td><td>加快预处理查询；通常不应在每个 FDTD 时间步遍历它。</td></tr><tr><td>Yee 网格</td><td>电场与磁场不同分量位于交错的位置，并交替更新。</td><td>材料与界面信息也要映射到相应位置，而不只是每格填一个数。</td></tr><tr><td>ADE</td><td>用辅助微分方程描述材料随频率变化的响应。</td><td>会增加状态变量、内存和更新运算；需检验稳定性及拟合误差。</td></tr><tr><td>PML</td><td>在计算边缘减少出射波反射的吸收层。</td><td>需要单独做厚度、距离和材料配置收敛检查。</td></tr><tr><td>GB / GiB</td><td>1 GB = 10⁹ B；1 GiB = 2³⁰ B。</td><td>对照软件日志和机器容量时必须统一单位。</td></tr><tr><td>P95 / 最大采样误差</td><td>95%样本不超过的误差 / 已查样本中的最大值。</td><td>均不自动成为整个表面的严格最大误差上界。</td></tr></tbody></table></div>
+<details><summary>为什么用记事本打开 VDATA，看到英文和编码而不是一个三维图？</summary><p>文件把数据按某种语法和编码组织。当前样本有 XML 文本外壳，体素数据被压缩后再转成可放进文本的 Base64 字符。记事本能显示字节对应的字符，却不会执行解码、材料映射和三维可视化。必须先按该版本格式解释编码块，获得尺寸、坐标、材料和占比，再绘图。本教程讨论的是已经核验过的 Coventor VoxelXML 路线，不把所有名为 .vdata 的文件视为同一格式。</p></details>
+<details><summary>如果 STL 表面连续，为什么计算结果还可能出现台阶？</summary><p>输入表面与计算材料分布之间还有一次映射。若只看每个计算点落在硅内还是空气内，表面小幅移动时某些点不变、跨过界面后突然变化。改用更充分的界面信息和经过验证的边界更新方式，才有机会减少这种数值敏感性。第一部分交互图和第三部分边界章节分别展示信息和算法层面的区别。</p></details>
+<details><summary>原始工艺体素是 20 nm，还能研究 10 nm 的位置变化吗？</summary><p>可以定义并研究“同一个已有几何整体移动 10 nm”后读出怎么变化；这依赖连续坐标和正确重新映射。但它不能补回源模型中未保存的真实细节，也不能证明实际刻蚀形貌具有10 nm准确度。位置参数的分辨能力、几何信息的可信度和数值误差预算需要分别报告。</p></details>
+<details><summary>有没有无损而且能把求解内存降低几十倍的通用算法？</summary><p>历史无损压缩已经让索引几何约缩到 1.06 MB；这一成果针对几何数据。一般传播区域中的场在时间上变化，不能因为空气的材料标签简单就省掉它的波动自由度。求解资源的大幅降低通常来自缩小物理域、利用成立的对称性、通过边界算法使用更粗网格、改变求解方法或更有效的数据布局；每项都有适用条件与验证代价。</p></details>
+<details><summary>“任意 VDATA 都能转换”的边界是什么？</summary><p>当前工具验证的是本机 SDK 和相应 VoxelXML 导出路线，读取材料、尺寸、坐标并借助原生导入/表面导出。未知版本、不同编码、缺失材料映射、三相交界、薄层、异常拓扑都需要兼容性案例；现有非零 QEM 路径对多材料共界面有明确限制。通用转换器应拒绝不理解的数据并给出诊断，不能把成功处理一个 AH53 样本当作所有版本/材料的认证。</p></details>
+</section>
+<section id="references"><h2>参考文献与证据索引</h2><p>以下以原始论文、官方文档及项目本地证据为主；正文在相关论点附近提供链接。资料描述算法或接口的一般能力，不能替代本项目的精度验证。网页核验日期为 2026-10-26。</p><ol class="references"><li id="ref-fdtd-solver-ansys"><a href="https://optics.ansys.com/hc/en-us/articles/360034914633-Finite-Difference-Time-Domain-FDTD-solver-introduction" target="_blank" rel="noopener noreferrer">Ansys: Finite Difference Time Domain (FDTD) solver introduction</a><div class="claim">FDTD 使用笛卡尔 Yee 网格；六个场分量在空间交错，导入几何不等于计算网格。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-plic-scardovelli"><a href="https://www.sciencedirect.com/science/article/pii/S0021999100965677" target="_blank" rel="noopener noreferrer">Scardovelli &amp; Zaleski (2000): Analytical Relations Connecting Linear Interfaces and Volume Fractions in Rectangular Grids</a><div class="claim">已知平面法向时，界面位置与体积分数之间可以进行几何求解；单个分数不唯一规定界面。这里只依据可访问的论文摘要介绍该问题范围。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-subpixel-farjadpour"><a href="https://opg.optica.org/ol/abstract.cfm?uri=ol-31-20-2972" target="_blank" rel="noopener noreferrer">Farjadpour et al. (2006): Improving accuracy by subpixel smoothing in the finite-difference time domain</a><div class="claim">合理设计的亚像素平滑可改善倾斜介质界面离散误差；锐角另有收敛困难。作者可访问论文版本用于核对公式背景。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-subpixel-farjadpour-author"><a href="https://math.mit.edu/~stevenj/papers/FarjadpourRo06-SPIE.pdf" target="_blank" rel="noopener noreferrer">Farjadpour et al. (2006): Improving accuracy by sub-pixel smoothing in FDTD — author-hosted SPIE version</a><div class="claim">与期刊论文同一研究线的作者公开版本，讨论基于微扰理论的亚像素平均、界面与角点误差；不作为第二份独立证据重复计权。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-tensor-kottke"><a href="https://journals.aps.org/pre/abstract/10.1103/PhysRevE.77.036611" target="_blank" rel="noopener noreferrer">Kottke, Farjadpour &amp; Johnson (2008): Perturbation theory for anisotropic dielectric interfaces, and application to subpixel smoothing of discretized numerical methods</a><div class="claim">界面平均应考虑连续场分量及方向；各向异性界面的处理不能简化为任意标量平均。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-tensor-kottke-author"><a href="https://math.mit.edu/~stevenj/papers/KottkeFa08.pdf" target="_blank" rel="noopener noreferrer">Kottke et al. (2008): author-hosted full paper</a><div class="claim">核对局部平面界面法向谐均值、切向算术均值与一般各向异性扩展的理论；与APS条目同一来源。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-materials-meep"><a href="https://meep.readthedocs.io/en/latest/Materials/" target="_blank" rel="noopener noreferrer">Meep Documentation: Materials</a><div class="claim">色散通过极化辅助状态推进；n,k 需要适合时域的响应模型；极化项增加内存与时间。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-subpixel-meep"><a href="https://meep.readthedocs.io/en/latest/Subpixel_Smoothing/" target="_blank" rel="noopener noreferrer">Meep Documentation: Subpixel Smoothing</a><div class="claim">当前亚像素平滑只处理瞬时材料部分；局部平面、锐角及材料函数性能有适用限制，不能自动保证色散Si界面二阶收敛。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-cmt-options"><a href="https://optics.ansys.com/hc/en-us/articles/360034382614-Selecting-the-best-mesh-refinement-option-in-the-FDTD-simulation-object" target="_blank" rel="noopener noreferrer">Ansys: Selecting the best mesh refinement option in the FDTD simulation object</a><div class="claim">CMT可处理两种色散介质界面；多于两材料的单元会回退阶梯；variant对金属和PEC的策略不同。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-stl-import"><a href="https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object" target="_blank" rel="noopener noreferrer">Ansys: STL import — Simulation object</a><div class="claim">STL导入后作为planar solid；文件不携带长度单位；多材料需要相应对象；面片数影响加载显示。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-binary-object"><a href="https://optics.ansys.com/hc/en-us/articles/360034382754-Binary-spatial-data-Simulation-object" target="_blank" rel="noopener noreferrer">Ansys: Binary spatial data — Simulation object</a><div class="claim">二值数据经插值和Binary Threshold定义边界；默认阈值0.5；应通过index monitor检查实际边界。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-importbinary2"><a href="https://optics.ansys.com/hc/en-us/articles/360034929013-importbinary2-Script-command" target="_blank" rel="noopener noreferrer">Ansys: importbinary2 — Script command</a><div class="claim">输入是0/1三维数组及均匀坐标，任意非零值解释为1；不能直接保留原始体积分数。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-nk-import"><a href="https://optics.ansys.com/hc/en-us/articles/360034901993-Spatial-n-k-data-Simulation-object" target="_blank" rel="noopener noreferrer">Ansys: Spatial (n,k) data — Simulation object</a><div class="claim">Spatial n,k 导入针对单频空间数据；这与用二值几何对象分配色散材料是不同路线。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-cmt-scaling"><a href="https://optics.ansys.com/hc/en-us/articles/360034382594-Understanding-Mesh-Refinement-and-Conformal-Mesh-in-FDTD" target="_blank" rel="noopener noreferrer">Ansys: Understanding Mesh Refinement and Conformal Mesh in FDTD</a><div class="claim">官方共形实现包含专有修改；固定三维问题均匀缩放时内存约h^-3、推进时间约h^-4。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-flaport"><a href="https://github.com/flaport/fdtd" target="_blank" rel="noopener noreferrer">flaport/fdtd official repository</a><div class="claim">上游库提供三维及可选PyTorch/GPU后端，NumPy默认为float64；本机适配器固定NumPy和二维是应用层现状。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-hdf5-chunks"><a href="https://portal.hdfgroup.org/documentation/hdf5/latest/hdf5_chunking.html" target="_blank" rel="noopener noreferrer">HDF Group: Chunking in HDF5</a><div class="claim">分块存储可配合局部读取及压缩；此为几何存储方案，不意味着动态场数组能够免除。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-cuda-memory"><a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/" target="_blank" rel="noopener noreferrer">NVIDIA: CUDA C++ Best Practices Guide</a><div class="claim">GPU实现应考虑合并访存和减少主机设备传输；不据通用指南承诺本项目加速倍数。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-memory-check"><a href="https://optics.ansys.com/hc/en-us/articles/360046368573-Running-FDTD-simulations-from-the-design-environment" target="_blank" rel="noopener noreferrer">Ansys: Running FDTD simulations from the design environment</a><div class="claim">CPU/GPU内存估计不同；GPU任务仍需主机RAM；实际峰值需日志核对。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-pml-meep"><a href="https://meep.readthedocs.io/en/latest/Perfectly_Matched_Layer/" target="_blank" rel="noopener noreferrer">Meep Documentation: Perfectly Matched Layers</a><div class="claim">PML是人工吸收层，须检验厚度和域范围；物理监视量应取自PML外部。</div><small>核验日期：2026-10-26</small></li><li id="ref-fdtd-gpu-ansys"><a href="https://optics.ansys.com/hc/en-us/articles/17518942465811-Getting-started-with-running-FDTD-on-GPU" target="_blank" rel="noopener noreferrer">Ansys: Getting started with running FDTD on GPU</a><div class="claim">GPU求解与CPU上的网格、脚本等步骤需要区分；不把CPU历史性能外推成未经测量的GPU承诺。</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-gltf"><a href="https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html" target="_blank" rel="noopener noreferrer">Khronos — glTF 2.0 Specification</a><div class="claim">glTF geometry, scene structure, metre units, right-handed coordinates and PBR rendering material semantics; these are not a complete dispersive electromagnetic constitutive model.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-stanford-scans"><a href="https://graphics.stanford.edu/data/3Dscanrep/" target="_blank" rel="noopener noreferrer">Stanford Computer Graphics Laboratory — The Stanford 3D Scanning Repository</a><div class="claim">Raw range scans and reconstructed meshes differ; reconstruction can remove noise and encode connectivity, and PLY is used for these datasets.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-cgal-pmp"><a href="https://doc.cgal.org/latest/Polygon_mesh_processing/index.html" target="_blank" rel="noopener noreferrer">CGAL — Polygon Mesh Processing User Manual</a><div class="claim">Polygon mesh validity, self-intersection checks, closed-mesh inside/outside queries, and surface-distance tools are distinct geometry operations.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-pbrt-mesh"><a href="https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes" target="_blank" rel="noopener noreferrer">Pharr, Jakob and Humphreys — PBRT: Triangle Meshes</a><div class="claim">Indexed shared vertices reduce repeated position storage; interpolated shading normals differ from triangle geometric shape.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-obj-spec"><a href="https://www.paulbourke.net/dataformats/obj/" target="_blank" rel="noopener noreferrer">Wavefront — Object Files (.obj), original specification archive</a><div class="claim">Original OBJ specification supports polygonal and free-form geometry. Search-indexed primary document verified; direct retrieval was blocked/timed out.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-dirsig-obj"><a href="https://dirsig.cis.rit.edu/docs/new/obj.html" target="_blank" rel="noopener noreferrer">RIT DIRSIG — Alias/Wavefront OBJ File Format</a><div class="claim">Vertex/face indexing, material identifiers and the limitations of MTL material descriptions for a physical simulation application.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-vtk-ply"><a href="https://vtk.org/doc/nightly/html/classvtkPLYReader.html" target="_blank" rel="noopener noreferrer">VTK — vtkPLYReader Class Reference</a><div class="claim">PLY vertices, face indices and supported scalar/colour/texture properties; supported property semantics depend on reader implementation.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-vtk-stl-writer"><a href="https://raw.githubusercontent.com/Kitware/VTK/master/IO/Geometry/vtkSTLWriter.cxx" target="_blank" rel="noopener noreferrer">Kitware VTK — vtkSTLWriter.cxx</a><div class="claim">Primary implementation of binary STL header, count, normal, three vertices and attribute storage, supporting the 84+50F byte calculation.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-occt-intro"><a href="https://www.occt3d.com/dev/doc/overview/html/index.html" target="_blank" rel="noopener noreferrer">Open CASCADE Technology — Introduction: Modeling Data</a><div class="claim">B-Rep combines mathematical geometry with topology; supported geometric types include canonical surfaces and NURBS.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-occt-data"><a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__modeling_data.html" target="_blank" rel="noopener noreferrer">Open CASCADE Technology — Modeling Data</a><div class="claim">Curve and surface interpolation versus approximation; geometric and topological data structures.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-occt-step"><a href="https://www.occt3d.com/dev/doc/overview/html/occt_user_guides__step.html" target="_blank" rel="noopener noreferrer">Open CASCADE Technology — STEP Translator</a><div class="claim">STEP exchanges geometry, topology and assembly data; extended attributes are handled separately from the basic shape translator.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-openscad"><a href="https://openscad.org/cheatsheet/" target="_blank" rel="noopener noreferrer">OpenSCAD — Official CheatSheet</a><div class="claim">Solid primitives, transformations and union/difference/intersection provide a concrete CSG example.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-vtk-data"><a href="https://docs.vtk.org/en/v9.5.2/design_documents/VTKFileFormats.html" target="_blank" rel="noopener noreferrer">VTK — VTK File Formats, version 9.5.2 documentation</a><div class="claim">Structured points, rectilinear and unstructured grids; explicit distinction between POINT_DATA and CELL_DATA.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-dual-contouring"><a href="https://www.cse.wustl.edu/~taoju/research/dualContour.pdf" target="_blank" rel="noopener noreferrer">Ju, Losasso, Schaefer and Warren (2002) — Dual Contouring of Hermite Data</a><div class="claim">Hermite edge-intersection and normal information enables contouring with additional boundary constraints and octree-based simplification.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-voxelization-paper"><a href="https://michael-schwarz.com/research/publ/2010/vox/" target="_blank" rel="noopener noreferrer">Schwarz and Seidel (2010) — Fast Parallel Surface and Solid Voxelization on GPUs</a><div class="claim">Conservative surface versus solid voxelization; sparse octree representation uses fine boundary voxels and coarse uniform interior/exterior regions.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-openvdb"><a href="https://www.openvdb.org/documentation/doxygen/overview.html" target="_blank" rel="noopener noreferrer">OpenVDB — Overview</a><div class="claim">Hierarchical sparse tree, transform and metadata separation; constant tiles and narrow-band level-set semantics.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-nanovdb"><a href="https://www.openvdb.org/documentation/doxygen/NanoVDB_FAQ.html" target="_blank" rel="noopener noreferrer">OpenVDB — NanoVDB FAQ</a><div class="claim">NanoVDB has static tree topology but values may be modified; contiguous pointerless layout supports CPU/GPU access.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-levelset"><a href="https://physbam.stanford.edu/~fedkiw/papers/cam2000-08.pdf" target="_blank" rel="noopener noreferrer">Osher and Fedkiw — Level Set Methods, author-hosted manuscript</a><div class="claim">Interfaces are represented as zero level sets of a scalar function; distance reinitialization and narrow-band methods are distinct numerical operations.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-gmsh"><a href="https://gmsh.info/doc/texinfo/gmsh.html" target="_blank" rel="noopener noreferrer">Gmsh — Reference Manual: Mesh module and x2 terrain/hybrid example</a><div class="claim">Surface and volume meshing, tetrahedral/hexahedral/prismatic elements, conformity and terrain/discrete/hybrid geometries.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-mfem-electromagnetics"><a href="https://mfem.org/electromagnetics/" target="_blank" rel="noopener noreferrer">MFEM — Electromagnetics Mini Applications</a><div class="claim">Finite-element electromagnetic applications have material constitutive relations and discretization requirements separate from geometry files.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-mfem-examples"><a href="https://mfem.org/examples/" target="_blank" rel="noopener noreferrer">MFEM — Example Codes and Miniapps</a><div class="claim">Finite-element spaces, Maxwell examples and DG advection with face integrators illustrate solver discretizations beyond Yee FDTD.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-deepsdf"><a href="https://arxiv.org/abs/1901.05103" target="_blank" rel="noopener noreferrer">Park et al. (2019) — DeepSDF: Learning Continuous Signed Distance Functions for Shape Representation</a><div class="claim">A learned SDF encodes surface through its zero level set and inside/outside through its sign.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-nerf"><a href="https://www.matthewtancik.com/nerf" target="_blank" rel="noopener noreferrer">Mildenhall et al. (2020) — NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis</a><div class="claim">Original NeRF maps spatial location and viewing direction to volume density and emitted radiance for view synthesis; it is not directly a silicon permittivity field.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-3dgs"><a href="https://arxiv.org/abs/2308.04079" target="_blank" rel="noopener noreferrer">Kerbl et al. (2023) — 3D Gaussian Splatting for Real-Time Radiance Field Rendering</a><div class="claim">Optimized 3D Gaussians represent radiance fields for real-time novel-view rendering, with objectives different from electromagnetic material-boundary validation.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-marching-cubes"><a href="https://www.cs.toronto.edu/~jacobson/seminar/lorenson-and-cline-1987.pdf" target="_blank" rel="noopener noreferrer">Lorensen and Cline (1987) — Marching Cubes: A High Resolution 3D Surface Construction Algorithm</a><div class="claim">Case-table contouring with interpolation constructs triangular isosurfaces from sampled scalar volume data.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-lewiner-mc"><a href="https://thomas.lewiner.org/pub/marching_cubes_jgt.html" target="_blank" rel="noopener noreferrer">Lewiner et al. — Efficient implementation of marching cubes cases with topological guarantees</a><div class="claim">Ambiguous marching-cubes cases need topology-aware handling; guarantees concern the assumed scalar-field interpolation rather than unknown physical truth.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-pbrt-bvh"><a href="https://www.pbr-book.org/4ed/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies" target="_blank" rel="noopener noreferrer">Pharr, Jakob and Humphreys — PBRT: Bounding Volume Hierarchies</a><div class="claim">BVHs partition primitives into hierarchical bounding boxes to skip irrelevant intersection tests at additional construction/memory cost.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-cgal-aabb"><a href="https://doc.cgal.org/latest/AABB_tree/" target="_blank" rel="noopener noreferrer">CGAL — Fast Intersection and Distance Computation: AABB Tree</a><div class="claim">AABB tree supports ray/intersection and distance queries and documents tree construction and traversal.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-qem"><a href="https://www.cs.cmu.edu/~garland/Papers/quadrics.pdf" target="_blank" rel="noopener noreferrer">Garland and Heckbert (1997) — Surface Simplification Using Quadric Error Metrics</a><div class="claim">Iterative vertex-pair contraction uses approximate quadric plane-distance costs, not a universal Hausdorff or electromagnetic-error bound.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-cgal-simplification"><a href="https://doc.cgal.org/latest/Surface_mesh_simplification/index.html" target="_blank" rel="noopener noreferrer">CGAL — Triangulated Surface Mesh Simplification User Manual</a><div class="claim">Cost, placement, stop predicates and additional filters are distinct; polyhedral-envelope filtering adds constraints beyond raw QEM cost.</div><small>核验日期：2026-10-26</small></li><li id="ref-geom-h5py"><a href="https://docs.h5py.org/en/stable/high/dataset.html" target="_blank" rel="noopener noreferrer">h5py — Datasets</a><div class="claim">Chunked storage and lossless filters differ from lossy scale-offset; chunk access affects data movement and memory.</div><small>核验日期：2026-10-26</small></li></ol><p>历史数字：<a href="evidence/history_metrics.json">方法数据</a> · <a href="evidence/history_provenance.json">报告哈希及定位</a> · <a href="evidence/resource_metrics.json">资源数据</a> · <a href="evidence/solver_context.json">自研分支与指标定义</a> · <a href="evidence/quality_check.json">发布前页面检查</a>。</p></section><footer>本报告中的示意图和数值图由本项目生成，历史截图为本项目先前实验产物。公开文件包含教程、证据摘录与重建图表的脚本；供应商手册、SDK、许可证及完整大模型不在发布包内。引用的外部资料归各自权利人所有。<br>当前精度路线为研究建议；本次没有启动新的电磁求解或工艺仿真。</footer></main></div><a class="backtop" href="#top">回到顶部 ↑</a><script src="assets/app.js"></script></body></html>

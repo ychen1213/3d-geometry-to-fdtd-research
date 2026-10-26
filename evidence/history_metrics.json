@@ -1,0 +1,1872 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-26",
+  "purpose": "Historical measured evidence for 3D representation research; geometry and performance observations, not a demonstrated optical-position accuracy comparison.",
+  "units": {
+    "file_size": "bytes unless explicitly noted; decimal MB=1000000 bytes",
+    "distance": "nm",
+    "geometry_coordinates": "um",
+    "time": "seconds"
+  },
+  "source_project_root": "CoventorProjects (local root intentionally omitted)",
+  "binary_full": {
+    "source_reports": [
+      {
+        "id": "AH53_FDTD_Import/full/manifest.json",
+        "json_pointer": "/"
+      },
+      {
+        "id": "AH53_FDTD_Import/full/verification.json",
+        "json_pointer": "/time_domain_solver_run"
+      }
+    ],
+    "source_sha256": "66da134572910aa2bcf704399ad6d2fd7cdf87154154a7c8196f214609b13292",
+    "source_info": {
+      "shape": [
+        800,
+        1400,
+        50
+      ],
+      "origin_um": [
+        16.0,
+        -14.0,
+        -0.5
+      ],
+      "voxel_size_um": 0.02,
+      "material_names": {
+        "2": "/Silicon/Si_Xtal",
+        "253": "/Void",
+        "255": "Air"
+      },
+      "compressed_blocks": 2564,
+      "plane_equations_present": false
+    },
+    "original_crop_shape": [
+      800,
+      1400,
+      50
+    ],
+    "coordinates": "original voxel centres, one zero ghost sample per face",
+    "source_fraction_rule": "ff=129 is single material; otherwise fraction1=ff/128",
+    "binarization_rule": "dominant material: ff>=64 chooses mat1; ff<64 chooses mat2; single material preserved",
+    "binary_threshold": 0.5,
+    "objects": [
+      {
+        "source_material_id": 2,
+        "source_material_name": "/Silicon/Si_Xtal",
+        "object_name": "VDATA_material_2",
+        "lumerical_material": "Si (Silicon) - Palik",
+        "mat_file": "AH53_binary.mat",
+        "mat_sha256": "48e5f51783efc5d7fb51f665e5daaec997112f7abb51c3ec09f10f76a66b1440",
+        "padded_shape": [
+          802,
+          1402,
+          52
+        ],
+        "binary_ones": 43412807,
+        "binary_dtype": "float64",
+        "source_fraction_volume_um3": 347.31284893749995,
+        "binary_voxel_volume_um3": 347.30245600000006,
+        "volume_change_um3": -0.010392937499887012,
+        "volume_change_percent": -0.0029923849727109264,
+        "mat_format": "native Lumerical matlabsave; MATLAB 7.3/HDF5",
+        "matlab_roundtrip_pass": true
+      }
+    ],
+    "limitations": [
+      "Mixed-cell fractional geometry is lost during binarization.",
+      "Lumerical interpolates binary samples; the boundary is not a union of exact voxel cubes.",
+      "Crop sides are artificial closures; not a complete mark or physical lateral boundary.",
+      "No optical source, spectrum, or time-domain solution is included in the geometry import."
+    ],
+    "verification": {
+      "time_domain_solver_run": false,
+      "completed": true,
+      "importbinary2_success": true,
+      "elapsed_seconds": 27.027885899995454
+    },
+    "file_sizes": [
+      {
+        "project_relative_path": "AH53_FDTD_Import/full/AH53_binary.mat",
+        "bytes": 467773472,
+        "observation": "filesystem size; large model not copied into research package"
+      },
+      {
+        "project_relative_path": "AH53_FDTD_Import/full/imported.fsp",
+        "bytes": 468240893,
+        "observation": "filesystem size; large model not copied into research package"
+      },
+      {
+        "project_relative_path": "AH53_FDTD_Import/small/AH53_binary.mat",
+        "bytes": 6031072,
+        "observation": "filesystem size; large model not copied into research package"
+      },
+      {
+        "project_relative_path": "AH53_FDTD_Import/small/imported.fsp",
+        "bytes": 6492653,
+        "observation": "filesystem size; large model not copied into research package"
+      }
+    ]
+  },
+  "small_crop_comparison": {
+    "source_reports": [
+      {
+        "id": "AH53_FDTD_Alternatives/comparison.json",
+        "json_pointer": "/cases"
+      },
+      {
+        "id": "AH53_FDTD_Alternatives/surface_accuracy_staggered.json",
+        "json_pointer": "/cases"
+      }
+    ],
+    "scope": "Identical x=22.6..25.4 um, y=-1..1 um, z=-0.5..0.5 um crop; 46 native ray sidewall reference points at a single y=0.01 um section.",
+    "binary_error_caveat": "binary_interpolated is our interpolated source 0/1 field contour, NOT a directly measured Lumerical boundary.",
+    "cases": [
+      {
+        "case": "binary",
+        "source_stl": null,
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "material": "Si (Silicon) - Palik",
+        "fsp_bytes": 6492653,
+        "source_bytes": 6031072,
+        "preview_shape": [
+          271,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 0.40764940006192774
+      },
+      {
+        "case": "fraction_surface",
+        "source_stl": "AH53_FDTD_Alternatives/fraction_surface/si_fraction_surface.stl",
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "material": "Si (Silicon) - Palik",
+        "geometry_vertices": [
+          50807,
+          3
+        ],
+        "facet_container_type": "ndarray",
+        "fsp_bytes": 4121884,
+        "source_bytes": 5080584,
+        "preview_shape": [
+          271,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 30.68759740004316
+      },
+      {
+        "case": "native_full",
+        "source_stl": "AH53_FDTD_Alternatives/native_full/AH53_full_standard_Si_Xtal.stl",
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "crop_um": [
+          16,
+          32,
+          -14,
+          14,
+          -0.5,
+          0.5
+        ],
+        "material": "Si (Silicon) - Palik",
+        "geometry_vertices": [
+          88968,
+          3
+        ],
+        "facet_container_type": "ndarray",
+        "max_import_vertex_displacement_pm": 1.0636838721414128,
+        "max_import_vertex_displacement_after_float32_pm": 0.0,
+        "fsp_bytes": 6875316,
+        "saved_reopened_verified": true,
+        "source_bytes": 33359103,
+        "preview_shape": [
+          1001,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 14.388811399927363,
+        "index_monitor_spatial_interpolation": "nearest mesh cell",
+        "index_monitor_record_conformal_mesh": true,
+        "monitor_config_saved_reopened": true
+      },
+      {
+        "case": "native_simple",
+        "source_stl": "AH53_FDTD_Alternatives/native_probe/native_simple_accuracy100_Si_Xtal.stl",
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "material": "Si (Silicon) - Palik",
+        "geometry_vertices": [
+          85,
+          3
+        ],
+        "facet_container_type": "ndarray",
+        "fsp_bytes": 469900,
+        "source_bytes": 32028,
+        "preview_shape": [
+          271,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 0.4542196999536827
+      },
+      {
+        "case": "native_standard",
+        "source_stl": "AH53_FDTD_Alternatives/native_probe/native_standard_featurescale0p2_Si_Xtal.stl",
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "crop_um": [
+          22.6,
+          25.4,
+          -1,
+          1,
+          -0.5,
+          0.5
+        ],
+        "material": "Si (Silicon) - Palik",
+        "geometry_vertices": [
+          3060,
+          3
+        ],
+        "facet_container_type": "ndarray",
+        "fsp_bytes": 684100,
+        "saved_reopened_verified": true,
+        "source_bytes": 1169933,
+        "preview_shape": [
+          271,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 0.9576581000583246
+      },
+      {
+        "case": "plane_surface",
+        "source_stl": "AH53_FDTD_Alternatives/plane_surface/si_plane_surface.stl",
+        "time_domain_solver_run": false,
+        "mesh_nm": 10,
+        "mesh_refinement": "conformal variant 0",
+        "completed": true,
+        "crop_um": [
+          22.6,
+          25.4,
+          -1,
+          1,
+          -0.5,
+          0.5
+        ],
+        "material": "Si (Silicon) - Palik",
+        "geometry_vertices": [
+          50101,
+          3
+        ],
+        "facet_container_type": "ndarray",
+        "fsp_bytes": 4071052,
+        "saved_reopened_verified": true,
+        "source_bytes": 5010184,
+        "preview_shape": [
+          271,
+          121
+        ],
+        "wavelength_nm": 582.2570212765959,
+        "index_real_min": 1.0,
+        "index_real_max": 3.989031377432114,
+        "intermediate_index_samples": 0,
+        "elapsed_seconds": 20.428776299930178
+      }
+    ],
+    "error_statistics": {
+      "binary_interpolated": {
+        "samples": 46,
+        "left": {
+          "mean_signed_nm": -1.20831169899591,
+          "rms_nm": 12.635452136493283,
+          "mean_abs_nm": 8.594836322657784,
+          "p95_abs_nm": 27.698412014161967,
+          "max_abs_nm": 42.18947576882215,
+          "min_nm": -42.18947576882215,
+          "max_nm": 29.275362318841758
+        },
+        "right": {
+          "mean_signed_nm": 1.922561730223726,
+          "rms_nm": 6.127126991838237,
+          "mean_abs_nm": 5.638879438363971,
+          "p95_abs_nm": 9.059765666728126,
+          "max_abs_nm": 9.287109375005542,
+          "min_nm": -6.90527060174162,
+          "max_nm": 9.287109375005542
+        },
+        "combined": {
+          "mean_signed_nm": 0.3571250156139079,
+          "rms_nm": 9.929661018074217,
+          "mean_abs_nm": 7.116857880510877,
+          "p95_abs_nm": 12.790593117248505,
+          "max_abs_nm": 42.18947576882215,
+          "min_nm": -42.18947576882215,
+          "max_nm": 29.275362318841758
+        },
+        "cd_error": {
+          "mean_signed_nm": 3.130873429219636,
+          "rms_nm": 15.49736072425085,
+          "mean_abs_nm": 11.727432226308412,
+          "p95_abs_nm": 34.7903040349532,
+          "max_abs_nm": 39.69576085964732,
+          "min_nm": -36.18063292058338,
+          "max_nm": 39.69576085964732
+        }
+      },
+      "fraction_surface": {
+        "samples": 46,
+        "left": {
+          "mean_signed_nm": 0.5557641542811816,
+          "rms_nm": 3.0568377446569355,
+          "mean_abs_nm": 1.8401897381955572,
+          "p95_abs_nm": 4.687314761060434,
+          "max_abs_nm": 11.808902414664146,
+          "min_nm": -4.744677890258231,
+          "max_nm": 11.808902414664146
+        },
+        "right": {
+          "mean_signed_nm": -0.17081352857225032,
+          "rms_nm": 1.8477780393270264,
+          "mean_abs_nm": 1.1299766468154235,
+          "p95_abs_nm": 2.2493147384910364,
+          "max_abs_nm": 7.3659745333394255,
+          "min_nm": -2.3093239111595665,
+          "max_nm": 7.3659745333394255
+        },
+        "combined": {
+          "mean_signed_nm": 0.19247531285446567,
+          "rms_nm": 2.52572174633099,
+          "mean_abs_nm": 1.4850831925054904,
+          "p95_abs_nm": 4.601270067263741,
+          "max_abs_nm": 11.808902414664146,
+          "min_nm": -4.744677890258231,
+          "max_nm": 11.808902414664146
+        },
+        "cd_error": {
+          "mean_signed_nm": -0.726577682853432,
+          "rms_nm": 4.355879498621223,
+          "mean_abs_nm": 2.659418931229944,
+          "p95_abs_nm": 11.445211806214663,
+          "max_abs_nm": 14.118226325823713,
+          "min_nm": -14.118226325823713,
+          "max_nm": 12.110652423597656
+        }
+      },
+      "native_simple": {
+        "samples": 46,
+        "left": {
+          "mean_signed_nm": 3.230080613501631,
+          "rms_nm": 7.886367824357034,
+          "mean_abs_nm": 5.1862361028575155,
+          "p95_abs_nm": 16.476081781604886,
+          "max_abs_nm": 20.45507758587206,
+          "min_nm": -16.678282065548444,
+          "max_nm": 20.45507758587206
+        },
+        "right": {
+          "mean_signed_nm": 0.23369867689243298,
+          "rms_nm": 5.095373802272901,
+          "mean_abs_nm": 4.367571372166354,
+          "p95_abs_nm": 8.546802138060627,
+          "max_abs_nm": 11.219587823806165,
+          "min_nm": -11.219587823806165,
+          "max_nm": 8.525740288202854
+        },
+        "combined": {
+          "mean_signed_nm": 1.731889645197032,
+          "rms_nm": 6.63918788881377,
+          "mean_abs_nm": 4.776903737511935,
+          "p95_abs_nm": 14.122375237221263,
+          "max_abs_nm": 20.45507758587206,
+          "min_nm": -16.678282065548444,
+          "max_nm": 20.45507758587206
+        },
+        "cd_error": {
+          "mean_signed_nm": -2.996381936609198,
+          "rms_nm": 9.914358263222077,
+          "mean_abs_nm": 7.623275101549486,
+          "p95_abs_nm": 19.95264865897255,
+          "max_abs_nm": 23.709697047372913,
+          "min_nm": -23.709697047372913,
+          "max_nm": 19.605911944534427
+        }
+      },
+      "plane_surface": {
+        "samples": 46,
+        "left": {
+          "mean_signed_nm": -0.07881070253939301,
+          "rms_nm": 0.9855379212167542,
+          "mean_abs_nm": 0.583339482851695,
+          "p95_abs_nm": 2.1424376592790386,
+          "max_abs_nm": 3.2829729250174466,
+          "min_nm": -1.7040589119794447,
+          "max_nm": 3.2829729250174466
+        },
+        "right": {
+          "mean_signed_nm": 0.18937205641740865,
+          "rms_nm": 0.5200895151595033,
+          "mean_abs_nm": 0.34398608146431014,
+          "p95_abs_nm": 1.0623024966143642,
+          "max_abs_nm": 1.4254113192073703,
+          "min_nm": -1.4254113192073703,
+          "max_nm": 1.0869859930693337
+        },
+        "combined": {
+          "mean_signed_nm": 0.05528067693900781,
+          "rms_nm": 0.7879651318221792,
+          "mean_abs_nm": 0.46366278215800255,
+          "p95_abs_nm": 1.634397013786426,
+          "max_abs_nm": 3.2829729250174466,
+          "min_nm": -1.7040589119794447,
+          "max_nm": 3.2829729250174466
+        },
+        "cd_error": {
+          "mean_signed_nm": 0.26818275895680166,
+          "rms_nm": 1.1939452719006536,
+          "mean_abs_nm": 0.7992596498722734,
+          "p95_abs_nm": 2.4125459940805167,
+          "max_abs_nm": 3.616557728186365,
+          "min_nm": -3.616557728186365,
+          "max_nm": 2.4366081120952288
+        }
+      },
+      "native_standard": {
+        "samples": 46,
+        "left": {
+          "mean_signed_nm": 0.0840518035410916,
+          "rms_nm": 1.0754126457512405,
+          "mean_abs_nm": 0.5490041739967303,
+          "p95_abs_nm": 2.4816731151073395,
+          "max_abs_nm": 4.007729022120543,
+          "min_nm": -2.6024578256986786,
+          "max_nm": 4.007729022120543
+        },
+        "right": {
+          "mean_signed_nm": 0.09056939789276874,
+          "rms_nm": 0.8032807767726334,
+          "mean_abs_nm": 0.5423786479510941,
+          "p95_abs_nm": 2.056161300652091,
+          "max_abs_nm": 2.334213016698783,
+          "min_nm": -2.334213016698783,
+          "max_nm": 0.9996640503722176
+        },
+        "combined": {
+          "mean_signed_nm": 0.08731060071693017,
+          "rms_nm": 0.9491502423152324,
+          "mean_abs_nm": 0.5456914109739123,
+          "p95_abs_nm": 2.294047233528218,
+          "max_abs_nm": 4.007729022120543,
+          "min_nm": -2.6024578256986786,
+          "max_nm": 4.007729022120543
+        },
+        "cd_error": {
+          "mean_signed_nm": 0.00651759435167714,
+          "rms_nm": 1.4870597763628335,
+          "mean_abs_nm": 0.9538575526822575,
+          "p95_abs_nm": 3.6497599302094828,
+          "max_abs_nm": 3.942513516808077,
+          "min_nm": -3.942513516808077,
+          "max_nm": 2.787788407086822
+        }
+      }
+    }
+  },
+  "fraction_surface": {
+    "method": "Lewiner marching cubes, original Si fraction field, isolevel0.5",
+    "source_binarized": false,
+    "smoothing": false,
+    "step_size": 1,
+    "crop_bounds_um": [
+      [
+        22.6,
+        -1.0,
+        -0.5
+      ],
+      [
+        25.4,
+        1.0,
+        0.5
+      ]
+    ],
+    "vertices": 50807,
+    "triangles": 101610,
+    "closed_edge_check_pass": true,
+    "inconsistently_oriented_edges": 0,
+    "enclosed_volume_um3": 4.990097516849012,
+    "source_fraction_volume_um3": 4.9912758125000005,
+    "stl_bytes": 5080584,
+    "native_ray_comparison": {
+      "samples": 14000,
+      "mean_signed_error_nm": 0.11024040895234472,
+      "rms_error_nm": 3.5704294831751424,
+      "absolute_error_quantiles_nm": {
+        "50": 0.0,
+        "90": 1.4891246784116474,
+        "95": 2.352649089434104,
+        "99": 7.813558129152982,
+        "100": 125.6338028169014
+      },
+      "reference": "native GetRayIntersection top; comparison is not physical calibration"
+    },
+    "limitation": "FF alone does not determine the unique native material interface."
+  },
+  "plane_surface": {
+    "method": "Plane-assisted center scalar field; zero-level Lewiner marching cubes; small-crop prototype",
+    "limitations": [
+      "The coordinate frame was checked only using saved rays in this specific crop; it is not a general or official plane-format guarantee.",
+      "The field samples local planes at voxel centers and interpolates between those samples. It is not an exact clipping or union of native interface planes.",
+      "The constructed field is not guaranteed to be a globally consistent signed distance function.",
+      "Pure-material signs are corrected from Si/Air labels; mixed-material plane signs are preserved.",
+      "The one-layer exterior pad creates artificial closures at crop boundaries.",
+      "Plane, fraction and native ray data can disagree slightly; no physical accuracy or lossless recovery is claimed.",
+      "Closed shared edges and positive signed volume do not prove absence of self-intersections.",
+      "FDTD import and independent boundary/CD comparison remain to be performed."
+    ],
+    "mesh_validation": {
+      "vertices": 50103,
+      "triangles": 100202,
+      "edge_count": 150303,
+      "edges_not_shared_by_two_faces": 0,
+      "inconsistently_oriented_edges": 0,
+      "face_winding_flipped_to_positive_signed_volume": true,
+      "enclosed_volume_um3": 4.984434465991353,
+      "mesh_bounds_um": [
+        [
+          22.60000500191003,
+          -0.9999949980899692,
+          -0.49999499808996917
+        ],
+        [
+          25.39999517440796,
+          0.9999949836730957,
+          0.4999949836730957
+        ]
+      ],
+      "closed_edge_check_pass": true,
+      "self_intersection_check_performed": false
+    },
+    "stl_bytes": 5010184,
+    "source_fraction_volume_um3": 4.9912758125000005,
+    "mesh_minus_source_fraction_volume_percent": -0.13706608822365504,
+    "final_status_correction": "Creation-time report said import pending; later comparison.json and plane_surface/import_report.json confirm import, save/reopen and boundary comparison completed. No time-domain solve.",
+    "later_import": {
+      "completed": true,
+      "saved_reopened_verified": true,
+      "time_domain_solver_run": false,
+      "fsp_bytes": 4071052
+    }
+  },
+  "native_probe": {
+    "source_step": 7,
+    "crop_bounds_um": [
+      22.6,
+      -1.0,
+      -0.5,
+      25.4,
+      1.0,
+      0.5
+    ],
+    "source_resolution_um": 0.02,
+    "process_rebuilt": false,
+    "notes": [
+      "FindZElevationAtPoint and downward ray intersection are separate native measurements.",
+      "A single top height cannot represent reentrant interfaces or overhangs.",
+      "Simple mesh geometryAccuracy=100 is the highest setting, not a documented lossless export."
+    ],
+    "height_queries": {
+      "file": "AH53_FDTD_Alternatives/native_probe/surface_height.npz",
+      "shape": [
+        142,
+        102
+      ],
+      "elapsed_seconds": 1.9325530529022217,
+      "find_z_finite_count": 14484,
+      "ray_top_finite_count": 14484,
+      "find_z_minus_ray_nm": {
+        "min": -9.274288803809982,
+        "max": 165.53931394970905,
+        "mean_abs": 1.640370476156185
+      },
+      "native_ray_returns": "((x,y,z),(nx,ny,nz),material_id); air/no hit can return mat=255 and invalid point; rays begun inside material are not used to enumerate all exits.",
+      "column_uniqueness": "Top is one outermost hit by definition; this does not demonstrate a column has only one material interface."
+    },
+    "crop_reentrant_binary_check": {
+      "array_shape": [
+        140,
+        100,
+        50,
+        3
+      ],
+      "threshold": 0.5,
+      "columns_with_air_to_si_transition_upwards": 41,
+      "transition_count": 41,
+      "interpretation": "Such columns cannot be represented exactly by one solid-below-height map at this threshold. Absence alone would not exclude sub-voxel overhang."
+    },
+    "source_files_unchanged": true,
+    "delaunay20nm_export": {
+      "success": false,
+      "reason": "Missing COV_DelaunayMesh license feature; license paths and server details omitted."
+    }
+  },
+  "native_full_accuracy": {
+    "method": "Native Standard surface mesh",
+    "samples": 630,
+    "bar_count": 3,
+    "y_sections_per_bar": 21,
+    "height_samples_per_section": 5,
+    "process_rebuilt": false,
+    "smoothing_applied": false,
+    "boundary_error_nm": {
+      "mean_signed_nm": -0.01916783350808707,
+      "rms_nm": 1.6219492940171596,
+      "mean_abs_nm": 0.9030323683447363,
+      "p95_abs_nm": 4.111197025625477,
+      "max_abs_nm": 6.686487258768636,
+      "min_nm": -6.686487258768636,
+      "max_nm": 4.595164335238877
+    },
+    "reference": "Native GetRayIntersection on original saved step7 wafer",
+    "limitation": "Sampled sidewall positions only; not a certified bound on every triangle, LER spectrum or optical error",
+    "per_bar_boundary_error_nm": {
+      "20.8": {
+        "mean_signed_nm": -0.022493363984126057,
+        "rms_nm": 1.7545113861959285,
+        "mean_abs_nm": 0.9419189162022926,
+        "p95_abs_nm": 4.449983388995981,
+        "max_abs_nm": 6.568884443446166,
+        "min_nm": -6.568884443446166,
+        "max_nm": 4.595164335238877
+      },
+      "24.0": {
+        "mean_signed_nm": 0.02207394249231987,
+        "rms_nm": 1.6903013116330625,
+        "mean_abs_nm": 0.9705632453696906,
+        "p95_abs_nm": 4.260071741727064,
+        "max_abs_nm": 6.686487258768636,
+        "min_nm": -6.686487258768636,
+        "max_nm": 4.392769371133198
+      },
+      "27.2": {
+        "mean_signed_nm": -0.05708407903245502,
+        "rms_nm": 1.3988315869641625,
+        "mean_abs_nm": 0.7966149434622255,
+        "p95_abs_nm": 3.423949859699604,
+        "max_abs_nm": 6.040602264459238,
+        "min_nm": -6.040602264459238,
+        "max_nm": 3.8829501949777523
+      }
+    },
+    "cd_error_nm": {
+      "mean_signed_nm": -0.9334704725725419,
+      "rms_nm": 3.0597653457176235,
+      "mean_abs_nm": 1.723600352576321,
+      "p95_abs_nm": 7.829846007230757,
+      "max_abs_nm": 10.39331172850666,
+      "min_nm": -10.39331172850666,
+      "max_nm": 3.3758929905687296
+    }
+  },
+  "standalone_vdata": {
+    "source_sha256": "66da134572910aa2bcf704399ad6d2fd7cdf87154154a7c8196f214609b13292",
+    "source_metadata": {
+      "schema_version": 1,
+      "input_vdata": "AH53_Si_300nm_Nonideal/AH53_Si_300nm_Nonideal.vdata",
+      "source_sha256": "66da134572910aa2bcf704399ad6d2fd7cdf87154154a7c8196f214609b13292",
+      "file_bytes": 2012729,
+      "xml_root": "VoxelXML",
+      "xml_attributes": {},
+      "voxel_size_um": 0.02,
+      "dimensions_xyz": [
+        800,
+        1400,
+        50
+      ],
+      "origin_um": [
+        16.0,
+        -14.0,
+        -0.5
+      ],
+      "bounds_um": [
+        [
+          16.0,
+          -14.0,
+          -0.5
+        ],
+        [
+          32.0,
+          14.0,
+          0.5
+        ]
+      ],
+      "original_voxel_unit": "um",
+      "original_origin_unit": "um",
+      "materials": [
+        {
+          "id": 2,
+          "name": "/Silicon/Si_Xtal",
+          "color_rgb": [
+            108,
+            153,
+            190
+          ],
+          "type": "Dielectric"
+        },
+        {
+          "id": 253,
+          "name": "/Void",
+          "color_rgb": [
+            64,
+            64,
+            64
+          ],
+          "type": "Dielectric"
+        }
+      ],
+      "has_plane_equations": false,
+      "optional_fields": [
+        "WaferInfo",
+        "MetrologyResults"
+      ],
+      "external_references": {
+        "ModelFile": {
+          "name": "AH53_Si_300nm_Nonideal/AH53_Si_300nm_Nonideal.zam"
+        },
+        "LayoutFile": {
+          "name": "AH53_Si_300nm_Nonideal.gds",
+          "top": "AH53_DEMO"
+        },
+        "ProcessFile": {
+          "name": "AH53_Si_300nm_Nonideal.vproc"
+        },
+        "MaterialFile": {
+          "name": "AH53_Si_300nm_Nonideal/AH53_Si_300nm_Nonideal.vmpd"
+        }
+      },
+      "wafer_info": {
+        "WaferType": {
+          "NotchAxis": "0",
+          "NotchPlane": "1",
+          "SurfacePlane": "0"
+        },
+        "CropBounds": {
+          "xMax": "32.0",
+          "xMin": "16.0",
+          "yMax": "14.0",
+          "yMin": "-14.0",
+          "zMax": "0.5",
+          "zMin": "-0.5"
+        },
+        "StructData": {
+          "VoidTrackingEnabled": "false"
+        }
+      },
+      "voxel_count": 56000000
+    },
+    "bounds_um": [
+      [
+        16.0,
+        -14.0,
+        -0.5
+      ],
+      [
+        32.0,
+        14.0,
+        0.5
+      ]
+    ],
+    "translation_um": [
+      16.0,
+      -14.0,
+      -0.5
+    ],
+    "stl_units": "um",
+    "stl_coordinates": "local; world = local + translation_um",
+    "materials": [
+      {
+        "source_name": "/Silicon/Si_Xtal",
+        "source_ids": [
+          2
+        ],
+        "native_id": 2,
+        "native_alias": "VDATA_ID_2",
+        "volume_um3": 347.31284893750006,
+        "source_color_rgb": [
+          108,
+          153,
+          190
+        ],
+        "stl_path": "VDATA_Converter/outputs/AH53_from_vdata/meshes/material_0002.stl",
+        "translation_um": [
+          16.0,
+          -14.0,
+          -0.5
+        ],
+        "audit": {
+          "triangles": 174966,
+          "vertices": 87485,
+          "closed_edges_all_two": true,
+          "degenerate_triangles": 0,
+          "inconsistent_edges": 0,
+          "orientation_flipped": false,
+          "local_bounds_um": [
+            [
+              -0.0006282573449425399,
+              -0.0006299449014477432,
+              -0.002509803744032979
+            ],
+            [
+              16.000629425048828,
+              28.000629425048828,
+              1.0001914501190186
+            ]
+          ],
+          "mesh_volume_um3": 348.24846776971475,
+          "native_volume_um3": 347.31284893750006,
+          "volume_difference_percent": 0.26938791210200375,
+          "stl_bytes": 8748384,
+          "limit": "Closure and volume checks do not certify every surface point or optical accuracy."
+        }
+      }
+    ],
+    "independent_input": true,
+    "original_project_required": false,
+    "process_simulation_run": false,
+    "limitations": [
+      "Native surface export is approximate, not a lossless representation.",
+      "Missing PlaneEquations cannot be uniquely recovered from material fractions.",
+      "Dopant/metrology fields are not converted into optical constitutive models."
+    ],
+    "reference_comparison": {
+      "converter_used_original_wafer": false,
+      "reference_used_only_after_conversion": true,
+      "source_has_plane_equations": false,
+      "valid_sample_count": 630,
+      "lateral_error_vs_original_native_nm": {
+        "mean_signed_nm": 0.003901599700378756,
+        "rms_nm": 1.611585103771566,
+        "mean_abs_nm": 0.8940645274071599,
+        "p95_abs_nm": 4.0883558204651385,
+        "max_abs_nm": 6.680452281912608,
+        "min_nm": -6.680452281912608,
+        "max_nm": 4.599799576066488
+      },
+      "limitation": "A fraction-only VDATA cannot uniquely specify its original within-cell interface; this comparison includes missing-information and meshing errors."
+    }
+  },
+  "lossless": {
+    "source_stl": "VDATA_Converter/outputs/AH53_from_vdata/meshes/material_0002.stl",
+    "source_faces": 174966,
+    "unique_vertices": 87485,
+    "source_stl_bytes": 8748384,
+    "indexed_vertices_bytes": 1049820,
+    "indexed_faces_bytes": 2099592,
+    "indexed_uncompressed_geometry_bytes": 3149412,
+    "compressed_indexed_mesh_bytes": 1421719,
+    "triangle_coordinates_exact_after_roundtrip": true,
+    "archived_files": [
+      {
+        "input_file": "VDATA_Converter/outputs/AH53_from_vdata/meshes/material_0002.stl",
+        "original_bytes": 8748384,
+        "gzip_file": "VDATA_Optimization/lossless/material_0002.stl.gz",
+        "gzip_bytes": 3627897,
+        "source_sha256": "5a2e337e8823051fb35478ef479235ca61542014b42420cdead71652ce573d31",
+        "bitwise_roundtrip_verified": true,
+        "compression_seconds": 0.6178713999688625,
+        "cad_memory_reduction": false
+      },
+      {
+        "input_file": "VDATA_Converter/outputs/AH53_from_vdata/fdtd/imported.fsp",
+        "original_bytes": 6751518,
+        "gzip_file": "VDATA_Optimization/lossless/imported.fsp.gz",
+        "gzip_bytes": 2508142,
+        "source_sha256": "65a2d8c170a8ea239baa2c397674653469569296558e89864f6b21dc14efce85",
+        "bitwise_roundtrip_verified": true,
+        "compression_seconds": 2.4881796000991017,
+        "cad_memory_reduction": false
+      }
+    ],
+    "limitation": "Indexed NPZ preserves geometry exactly but is a converter interchange, not a native FDTD import format. Gzip needs decompression before opening; neither changes the solver mesh or reduces CAD object count."
+  },
+  "entropy": {
+    "baseline_npz_bytes": 1421719,
+    "original_stl_bytes": 8748384,
+    "best": {
+      "vertices_transform": "raw",
+      "faces_transform": "raw",
+      "codec": "lzma6",
+      "archive_bytes": 1059637,
+      "compress_seconds": 1.0134479999542236,
+      "decompress_verify_seconds": 0.10211129998788238,
+      "every_array_bitwise_roundtrip": true
+    },
+    "size_reduction_vs_npz_percent": 25.467901884971646,
+    "size_reduction_vs_stl_percent": 87.88762587467582,
+    "arrays_verified": [
+      {
+        "name": "vertices_um",
+        "dtype": "<f4",
+        "shape": [
+          87485,
+          3
+        ],
+        "sha256": "3b32434a3a896da46b9e410d56f4084457443a538b58fc92ef746ef031325cdb"
+      },
+      {
+        "name": "faces",
+        "dtype": "<u4",
+        "shape": [
+          174966,
+          3
+        ],
+        "sha256": "595201738e780c979673d7610330ec44692c44d3b3159b2f409d001f94c785f0"
+      },
+      {
+        "name": "translation_um",
+        "dtype": "<f8",
+        "shape": [
+          3
+        ],
+        "sha256": "a131ee351f37aeeeaf65421aa56353e86fbb7cb724e0f276a4b2602935e8d32d"
+      },
+      {
+        "name": "source_stl_sha256",
+        "dtype": "<U64",
+        "shape": [],
+        "sha256": "d29e1f449176787cdc75b7918221721c3fe7dbed79ce119ca46762104f1f4c32"
+      }
+    ],
+    "candidate_count": 40
+  },
+  "planar": {
+    "predicate": "exact integer orient3d on source float32 dyadic coordinates",
+    "input_triangles": 174966,
+    "input_vertices": 87485,
+    "candidate_shared_edges": 11823,
+    "exact_coplanar_shared_edges": 7468,
+    "output_facets": 168281,
+    "output_vertices": 86703,
+    "facets_reduction_percent": 3.8207423156498943,
+    "vertex_reduction_percent": 0.8938675201463075,
+    "changed_vertex_coordinates": 0,
+    "boundary_vertices_removed": 0,
+    "boundary_handling": "Collinear boundary vertices retained exactly to prevent T junctions; non-simple boundaries fall back to source triangles.",
+    "geometry_scope": "Same surface as the existing STL, not a correction of STL approximation to source VDATA.",
+    "limitation": "Mathematical surface equivalence of strict coplanar unions; downstream importer triangulation and optical mesh still require validation.",
+    "audit": {
+      "facet_boundary_edges": 254981,
+      "non_two_incident_edges": 0,
+      "inconsistently_oriented_edges": 0,
+      "facets_with_holes": 1,
+      "incorrect_hole_orientation_facets": 0,
+      "exact_signed_volume_equal": true,
+      "exact_volume_difference_um3": 0.0,
+      "input_volume_um3": 348.24846776971464,
+      "output_volume_um3": 348.24846776971464,
+      "note": "Fan triangles are used only for exact signed-volume integration; concave polygons and holes must be imported as rings, not this fan."
+    }
+  },
+  "qem": [
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.25,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 65614,
+        "triangles": 131224,
+        "unique_edges": 196836,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24813036885985,
+        "bounds_um": [
+          [
+            -0.0006292545585893095,
+            -0.0006278114160522819,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000638961791992,
+            1.0001918077468872
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 262451,
+        "maximum_nm": 0.4620581555474335,
+        "rms_nm": 0.034289787377698805,
+        "p95_nm": 0.07745803955440878,
+        "p99_nm": 0.14996194971042165
+      },
+      "simplified_to_source": {
+        "samples": 196838,
+        "maximum_nm": 0.3388839202534586,
+        "rms_nm": 0.02873653821909801,
+        "p95_nm": 0.06931815110169413,
+        "p99_nm": 0.1325239700610999
+      },
+      "sample_mode": "centroids",
+      "sampled_symmetric_maximum_nm": 0.4620581555474335,
+      "stl_bytes": 6561284,
+      "volume_change_percent": -9.688509383654065e-05,
+      "simplify_seconds": 0.23200670001097023,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.45,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 48117,
+        "triangles": 96230,
+        "unique_edges": 144345,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.2483416309485,
+        "bounds_um": [
+          [
+            -0.0006284221890382469,
+            -0.0006263001705519855,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000638961791992,
+            1.0002378225326538
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 524900,
+        "maximum_nm": 0.8824076917170303,
+        "rms_nm": 0.10881865934412364,
+        "p95_nm": 0.24364988038762872,
+        "p99_nm": 0.364326872290228
+      },
+      "simplified_to_source": {
+        "samples": 288692,
+        "maximum_nm": 0.8776373531500566,
+        "rms_nm": 0.11645170868369918,
+        "p95_nm": 0.262478020908736,
+        "p99_nm": 0.380943910330286
+      },
+      "sample_mode": "dense",
+      "sampled_symmetric_maximum_nm": 0.8824076917170303,
+      "stl_bytes": 4811584,
+      "volume_change_percent": -3.622091058197441e-05,
+      "simplify_seconds": 0.29637300001922995,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.5,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 43743,
+        "triangles": 87482,
+        "unique_edges": 131223,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.2487207823322,
+        "bounds_um": [
+          [
+            -0.0006284221890382469,
+            -0.0006148146349005401,
+            -0.002509803744032979
+          ],
+          [
+            16.000627517700195,
+            28.000638961791992,
+            1.0002429485321045
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 262451,
+        "maximum_nm": 1.0092641689968942,
+        "rms_nm": 0.12992486797400365,
+        "p95_nm": 0.2880102410267691,
+        "p99_nm": 0.41866293429706103
+      },
+      "simplified_to_source": {
+        "samples": 131225,
+        "maximum_nm": 0.7783779320507787,
+        "rms_nm": 0.13638385867047406,
+        "p95_nm": 0.3007388989766306,
+        "p99_nm": 0.41647868421714573
+      },
+      "sample_mode": "centroids",
+      "sampled_symmetric_maximum_nm": 1.0092641689968942,
+      "stl_bytes": 4374184,
+      "volume_change_percent": 7.265290187241646e-05,
+      "simplify_seconds": 0.28264520002994686,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.6,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 34995,
+        "triangles": 69986,
+        "unique_edges": 104979,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24939413480496,
+        "bounds_um": [
+          [
+            -0.0006180882337503135,
+            -0.0005885374848730862,
+            -0.002509803744032979
+          ],
+          [
+            16.000625610351562,
+            28.000621795654297,
+            1.0002344846725464
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 524900,
+        "maximum_nm": 1.4459050955826167,
+        "rms_nm": 0.1870394170480151,
+        "p95_nm": 0.401316234613154,
+        "p99_nm": 0.5878485138314569
+      },
+      "simplified_to_source": {
+        "samples": 209960,
+        "maximum_nm": 1.3584701339846585,
+        "rms_nm": 0.2192188318017372,
+        "p95_nm": 0.45536355368829345,
+        "p99_nm": 0.6466871533356273
+      },
+      "sample_mode": "dense",
+      "sampled_symmetric_maximum_nm": 1.4459050955826167,
+      "stl_bytes": 3499384,
+      "volume_change_percent": 0.000266006939320107,
+      "simplify_seconds": 0.3309851000085473,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.65,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 30621,
+        "triangles": 61238,
+        "unique_edges": 91857,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.25056749987556,
+        "bounds_um": [
+          [
+            -0.0006180882337503135,
+            -0.0005851674359291792,
+            -0.002509803744032979
+          ],
+          [
+            16.00058937072754,
+            28.000606536865234,
+            1.0003418922424316
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 524900,
+        "maximum_nm": 1.6511869898920133,
+        "rms_nm": 0.2234876712213658,
+        "p95_nm": 0.47861246389668693,
+        "p99_nm": 0.6996144002769829
+      },
+      "simplified_to_source": {
+        "samples": 183716,
+        "maximum_nm": 1.6580472586338937,
+        "rms_nm": 0.26761463671958524,
+        "p95_nm": 0.5515019479015068,
+        "p99_nm": 0.7796630651880381
+      },
+      "sample_mode": "dense",
+      "sampled_symmetric_maximum_nm": 1.6580472586338937,
+      "stl_bytes": 3061984,
+      "volume_change_percent": 0.0006029402438878506,
+      "simplify_seconds": 0.3471131999976933,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.75,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 21872,
+        "triangles": 43740,
+        "unique_edges": 65610,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.2550080325762,
+        "bounds_um": [
+          [
+            -0.0006180882337503135,
+            -0.0005650057573802769,
+            -0.002509803744032979
+          ],
+          [
+            16.000564575195312,
+            28.000606536865234,
+            1.000465750694275
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 262451,
+        "maximum_nm": 3.367373983481583,
+        "rms_nm": 0.3453306859811091,
+        "p95_nm": 0.7347445582140975,
+        "p99_nm": 1.092594834049093
+      },
+      "simplified_to_source": {
+        "samples": 65612,
+        "maximum_nm": 2.12491435813718,
+        "rms_nm": 0.3850114061585429,
+        "p95_nm": 0.7892134626528053,
+        "p99_nm": 1.090307953832746
+      },
+      "sample_mode": "centroids",
+      "sampled_symmetric_maximum_nm": 3.367373983481583,
+      "stl_bytes": 2187084,
+      "volume_change_percent": 0.0018780449784649988,
+      "simplify_seconds": 0.41274010005872697,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    },
+    {
+      "algorithm": "fast-simplification 0.2.0 / Fast-Quadric-Mesh-Simplification",
+      "smoothing": "none",
+      "target_reduction": 0.9,
+      "aggressiveness": 3.0,
+      "preserve_border": true,
+      "source": {
+        "vertices": 87485,
+        "triangles": 174966,
+        "unique_edges": 262449,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.24846776971464,
+        "bounds_um": [
+          [
+            -0.0006282573449425399,
+            -0.0006299449014477432,
+            -0.002509803744032979
+          ],
+          [
+            16.000629425048828,
+            28.000629425048828,
+            1.0001914501190186
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "simplified": {
+        "vertices": 8750,
+        "triangles": 17496,
+        "unique_edges": 26244,
+        "closed_edges_all_two": true,
+        "inconsistent_edges": 0,
+        "degenerate_triangles": 0,
+        "euler_characteristic": 2,
+        "signed_volume_um3": 348.28848139241876,
+        "bounds_um": [
+          [
+            -0.0007467836258001626,
+            -0.0005650057573802769,
+            -0.002509803744032979
+          ],
+          [
+            16.000564575195312,
+            28.000606536865234,
+            1.0009523630142212
+          ]
+        ],
+        "self_intersection_test": "not performed"
+      },
+      "source_to_simplified": {
+        "samples": 262451,
+        "maximum_nm": 6.070096694004744,
+        "rms_nm": 0.9820503001151026,
+        "p95_nm": 2.117740796275812,
+        "p99_nm": 3.06079827150956
+      },
+      "simplified_to_source": {
+        "samples": 26246,
+        "maximum_nm": 5.450608216979872,
+        "rms_nm": 1.1088270853584221,
+        "p95_nm": 2.272392213312032,
+        "p99_nm": 3.050110883312588
+      },
+      "sample_mode": "centroids",
+      "sampled_symmetric_maximum_nm": 6.070096694004744,
+      "stl_bytes": 874884,
+      "volume_change_percent": 0.01148996374926714,
+      "simplify_seconds": 0.6277283999370411,
+      "limitations": "QEM cost and finite surface samples do not provide a continuous Hausdorff upper bound. Closure/Euler checks do not exclude self-intersections. Errors are additional to the existing VDATA-to-native-STL approximation."
+    }
+  ],
+  "cad_storage": {
+    "application": "Lumerical 2025 R2",
+    "cases": [
+      {
+        "label": "stl",
+        "fsp": "VDATA_Optimization/storage/stl.fsp",
+        "fsp_bytes": 6751518,
+        "geometry": {
+          "triangles": 174966,
+          "vertices": 87485,
+          "sha256": "1dab2ba9993ddc67c34439c421ac2e3f52ce5bd148857203f94078e1d3431f71"
+        },
+        "private_commit_delta_after_import_clear_bytes": 68096000,
+        "working_set_delta_after_import_clear_bytes": 63397888,
+        "import_peak_working_set_bytes": 395345920,
+        "source_report": "VDATA_Optimization/storage/stl_report.json"
+      },
+      {
+        "label": "indexed_triangles",
+        "fsp": "VDATA_Optimization/storage/indexed_triangles.fsp",
+        "fsp_bytes": 6751535,
+        "geometry": {
+          "triangles": 174966,
+          "vertices": 87485,
+          "sha256": "1dab2ba9993ddc67c34439c421ac2e3f52ce5bd148857203f94078e1d3431f71"
+        },
+        "private_commit_delta_after_import_clear_bytes": 76091392,
+        "working_set_delta_after_import_clear_bytes": 69349376,
+        "import_peak_working_set_bytes": 345620480,
+        "source_report": "VDATA_Optimization/storage/indexed_triangles_report.json"
+      },
+      {
+        "label": "planar_polygons",
+        "fsp": "VDATA_Optimization/storage/planar_polygons.fsp",
+        "fsp_bytes": 6592807,
+        "geometry": {
+          "vertices": 86703,
+          "facets": 168281,
+          "facet_matrix_shape": [
+            256,
+            2,
+            168281
+          ],
+          "max_vertices_per_ring": 256,
+          "max_rings_per_facet": 2
+        },
+        "private_commit_delta_after_import_clear_bytes": 78909440,
+        "working_set_delta_after_import_clear_bytes": 72749056,
+        "import_peak_working_set_bytes": 450158592,
+        "source_report": "VDATA_Optimization/storage/planar_polygons_report.json"
+      },
+      {
+        "label": "qem_045p0",
+        "fsp": "VDATA_Optimization/storage/qem_045p0.fsp",
+        "fsp_bytes": 3917022,
+        "geometry": {
+          "triangles": 96230,
+          "vertices": 48117,
+          "sha256": "14746a45b13ccf8fd991b7b68b96b1e6a99eeb4116f2e9f2f7c4fe31d847d74c"
+        },
+        "private_commit_delta_after_import_clear_bytes": 42897408,
+        "working_set_delta_after_import_clear_bytes": 36229120,
+        "import_peak_working_set_bytes": 327647232,
+        "source_report": "VDATA_Optimization/storage/qem_045p0_report.json"
+      },
+      {
+        "label": "qem_065p0",
+        "fsp": "VDATA_Optimization/storage/qem_065p0.fsp",
+        "fsp_bytes": 2657310,
+        "geometry": {
+          "triangles": 61238,
+          "vertices": 30621,
+          "sha256": "d539f2361d4b30a19cd4b51cbbd09633e1f294d1482605c880e67781e66bc199"
+        },
+        "private_commit_delta_after_import_clear_bytes": 26763264,
+        "working_set_delta_after_import_clear_bytes": 25137152,
+        "import_peak_working_set_bytes": 295018496,
+        "source_report": "VDATA_Optimization/storage/qem_065p0_report.json"
+      }
+    ],
+    "fresh_load_verification": [
+      {
+        "label": "stl",
+        "pid": 45552,
+        "fsp": "VDATA_Optimization/storage/stl.fsp",
+        "empty": {
+          "working_set_bytes": 239853568,
+          "private_commit_bytes": 218488832,
+          "peak_working_set_bytes": 239853568
+        },
+        "loaded_before_geometry_query": {
+          "working_set_bytes": 314970112,
+          "private_commit_bytes": 300425216,
+          "peak_working_set_bytes": 455602176
+        },
+        "private_commit_delta_bytes": 81936384,
+        "working_set_delta_bytes": 75116544,
+        "source_geometry": {
+          "triangles": 174966,
+          "vertices": 87485,
+          "sha256": "1dab2ba9993ddc67c34439c421ac2e3f52ce5bd148857203f94078e1d3431f71"
+        },
+        "imported_geometry": {
+          "triangles": 174966,
+          "vertices": 87485,
+          "sha256": "1dab2ba9993ddc67c34439c421ac2e3f52ce5bd148857203f94078e1d3431f71"
+        },
+        "source_geometry_hash_matches": true,
+        "material": "Si (Silicon) - Palik",
+        "material_correct": true,
+        "translation_m": [
+          1.6e-05,
+          -1.4e-05,
+          -5e-07
+        ],
+        "translation_correct": true,
+        "optical_solver_run": false
+      },
+      {
+        "label": "qem_045p0",
+        "pid": 59512,
+        "fsp": "VDATA_Optimization/storage/qem_045p0.fsp",
+        "empty": {
+          "working_set_bytes": 239775744,
+          "private_commit_bytes": 218648576,
+          "peak_working_set_bytes": 239775744
+        },
+        "loaded_before_geometry_query": {
+          "working_set_bytes": 278188032,
+          "private_commit_bytes": 262242304,
+          "peak_working_set_bytes": 360857600
+        },
+        "private_commit_delta_bytes": 43593728,
+        "working_set_delta_bytes": 38412288,
+        "source_geometry": {
+          "triangles": 96230,
+          "vertices": 48117,
+          "sha256": "14746a45b13ccf8fd991b7b68b96b1e6a99eeb4116f2e9f2f7c4fe31d847d74c"
+        },
+        "imported_geometry": {
+          "triangles": 96230,
+          "vertices": 48117,
+          "sha256": "14746a45b13ccf8fd991b7b68b96b1e6a99eeb4116f2e9f2f7c4fe31d847d74c"
+        },
+        "source_geometry_hash_matches": true,
+        "material": "Si (Silicon) - Palik",
+        "material_correct": true,
+        "translation_m": [
+          1.6e-05,
+          -1.4e-05,
+          -5e-07
+        ],
+        "translation_correct": true,
+        "optical_solver_run": false
+      },
+      {
+        "label": "qem_065p0",
+        "pid": 57588,
+        "fsp": "VDATA_Optimization/storage/qem_065p0.fsp",
+        "empty": {
+          "working_set_bytes": 239853568,
+          "private_commit_bytes": 218345472,
+          "peak_working_set_bytes": 239853568
+        },
+        "loaded_before_geometry_query": {
+          "working_set_bytes": 264527872,
+          "private_commit_bytes": 249622528,
+          "peak_working_set_bytes": 317206528
+        },
+        "private_commit_delta_bytes": 31277056,
+        "working_set_delta_bytes": 24674304,
+        "source_geometry": {
+          "triangles": 61238,
+          "vertices": 30621,
+          "sha256": "d539f2361d4b30a19cd4b51cbbd09633e1f294d1482605c880e67781e66bc199"
+        },
+        "imported_geometry": {
+          "triangles": 61238,
+          "vertices": 30621,
+          "sha256": "d539f2361d4b30a19cd4b51cbbd09633e1f294d1482605c880e67781e66bc199"
+        },
+        "source_geometry_hash_matches": true,
+        "material": "Si (Silicon) - Palik",
+        "material_correct": true,
+        "translation_m": [
+          1.6e-05,
+          -1.4e-05,
+          -5e-07
+        ],
+        "translation_correct": true,
+        "optical_solver_run": false
+      }
+    ],
+    "conclusions": [
+      "Indexed shared-vertex addplanarsolid and stlimport save the same geometric payload: FSP size differs by only 17 bytes. stlimport already merges repeated vertices.",
+      "Exactly coplanar polygon merging reduced FSP by only 2.35% here and did not reduce measured import-stage CAD private commit.",
+      "Retrieving heterogeneous polygon facets returns a globally padded matrix in this installation: 256 x 2 x 168281 doubles, 689278976 bytes. CAD query temporary peak reached 2.38 GB.",
+      "QEM candidates reduce FSP and observed private CAD memory; geometry approximation errors must be read from the independent surface and sidewall reports.",
+      "Each memory test used a new hidden CAD session. Values include allocators, caches, CAD rendering and import/load temporary buffers. They are not pure geometry bytes.",
+      "There is no FDTD region or time-domain solve in these geometry projects. These measurements do not establish solver memory savings.",
+      "Triangle hashes canonicalize the undirected triangle point set after float32 um quantization; save/reopen also separately checked complete facet-array equality."
+    ],
+    "optical_solver_run": false
+  },
+  "qem_candidates": {
+    "comparison": [
+      {
+        "name": "原转换模型",
+        "triangles": 174966,
+        "stl_bytes": 8748384,
+        "fsp": "VDATA_Optimization/storage/stl.fsp",
+        "fsp_bytes": 6751518,
+        "fresh_load_working_set_bytes": 314970112,
+        "fresh_load_working_set_delta_bytes": 75116544,
+        "fresh_load_private_commit_delta_bytes": 81936384,
+        "sampled_additional_surface_distance_nm": 0.0,
+        "sampled_additional_sidewall_x_nm": 0.0,
+        "sampled_additional_cd_nm": 0.0,
+        "additional_signed_volume_change_percent": 0.0,
+        "fdtd_loaded_source_geometry_matches": true,
+        "fdtd_material_correct": true,
+        "fdtd_translation_correct": true
+      },
+      {
+        "name": "QEM 减面45%：保守候选",
+        "triangles": 96230,
+        "stl_bytes": 4811584,
+        "fsp": "VDATA_Optimization/storage/qem_045p0.fsp",
+        "fsp_bytes": 3917022,
+        "fresh_load_working_set_bytes": 278188032,
+        "fresh_load_working_set_delta_bytes": 38412288,
+        "fresh_load_private_commit_delta_bytes": 43593728,
+        "sampled_additional_surface_distance_nm": 0.8824076917170303,
+        "sampled_additional_sidewall_x_nm": 0.7242006906800214,
+        "sampled_additional_cd_nm": 1.0207133659925205,
+        "additional_signed_volume_change_percent": -3.622091058197441e-05,
+        "fdtd_loaded_source_geometry_matches": true,
+        "fdtd_material_correct": true,
+        "fdtd_translation_correct": true
+      },
+      {
+        "name": "QEM 减面65%：更小候选",
+        "triangles": 61238,
+        "stl_bytes": 3061984,
+        "fsp": "VDATA_Optimization/storage/qem_065p0.fsp",
+        "fsp_bytes": 2657310,
+        "fresh_load_working_set_bytes": 264527872,
+        "fresh_load_working_set_delta_bytes": 24674304,
+        "fresh_load_private_commit_delta_bytes": 31277056,
+        "sampled_additional_surface_distance_nm": 1.6580472586338937,
+        "sampled_additional_sidewall_x_nm": 1.4009277118915975,
+        "sampled_additional_cd_nm": 2.1349635087055674,
+        "additional_signed_volume_change_percent": 0.0006029402438878506,
+        "fdtd_loaded_source_geometry_matches": true,
+        "fdtd_material_correct": true,
+        "fdtd_translation_correct": true
+      }
+    ],
+    "strict_geometry_bound_certified": false,
+    "optical_accuracy_verified": false,
+    "optical_solver_run": false,
+    "arbitrary_multimaterial_optimization_validated": false
+  },
+  "fdtd_performance": {
+    "source_report": {
+      "id": "AH53_FDTD_RunStudy/results.json",
+      "json_pointer": "/benchmarks"
+    },
+    "source_geometry_project": "VDATA_Optimization/storage/qem_045p0.fsp",
+    "cases": [
+      {
+        "case": "uniform_40nm",
+        "status": "completed",
+        "clean_completed": true,
+        "threads_requested": 8,
+        "device": "CPU",
+        "elapsed_wall_seconds": 233.72428690001834,
+        "max_ram_sample": {
+          "working_set_bytes": 3532386304,
+          "private_commit_bytes": 3530510336,
+          "os_peak_working_set_bytes": 3532386304,
+          "os_peak_pagefile_usage_bytes": 3530526720
+        },
+        "wall_seconds_actual": {
+          "overall": 233.138478,
+          "initialization": 65.10594,
+          "solve": 160.635807,
+          "checkpoint": 0.0,
+          "finalize_and_save": 2.99794,
+          "miscellaneous": 4.398739
+        },
+        "mesh_grid_dimensions_actual": [
+          404,
+          704,
+          107
+        ],
+        "mesh_gridpoints_product_actual": 30432512,
+        "completed_iterations": 1314,
+        "completed_simulation_time_seconds": 1.000071e-13,
+        "one_ps_prediction": {
+          "target_maximum_physical_time_seconds": 1e-12,
+          "dt_from_completed_iteration_report_seconds": 7.610890410958904e-17,
+          "predicted_iterations": 13140,
+          "assumption": "Same mesh, materials, sources and monitors; no early auto shutoff. Extrapolation is a runtime estimate, not a completed 1 ps solve or an optical convergence result.",
+          "propagation_wall_seconds_by_time_ratio": 1606.244026674106,
+          "propagation_wall_seconds_by_grid_work": 1606.358072684163,
+          "measured_initialization_and_other_overhead_seconds": 72.50261900000001,
+          "total_wall_seconds_estimate": 1678.746645674106
+        },
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_60nm",
+        "status": "completed",
+        "clean_completed": true,
+        "threads_requested": 8,
+        "device": "CPU",
+        "elapsed_wall_seconds": 70.3353903000243,
+        "max_ram_sample": {
+          "working_set_bytes": 1386987520,
+          "private_commit_bytes": 1380925440,
+          "os_peak_working_set_bytes": 1386991616,
+          "os_peak_pagefile_usage_bytes": 1380958208
+        },
+        "wall_seconds_actual": {
+          "overall": 68.806844,
+          "initialization": 22.896062,
+          "solve": 41.606855,
+          "checkpoint": 0.0,
+          "finalize_and_save": 1.631281,
+          "miscellaneous": 2.672598
+        },
+        "mesh_grid_dimensions_actual": [
+          278,
+          478,
+          79
+        ],
+        "mesh_gridpoints_product_actual": 10497836,
+        "completed_iterations": 875,
+        "completed_simulation_time_seconds": 9.995844e-14,
+        "one_ps_prediction": {
+          "target_maximum_physical_time_seconds": 1e-12,
+          "dt_from_completed_iteration_report_seconds": 1.1423821714285714e-16,
+          "predicted_iterations": 8754,
+          "assumption": "Same mesh, materials, sources and monitors; no early auto shutoff. Extrapolation is a runtime estimate, not a completed 1 ps solve or an optical convergence result.",
+          "propagation_wall_seconds_by_time_ratio": 416.2415399840173,
+          "propagation_wall_seconds_by_grid_work": 416.2587509337144,
+          "measured_initialization_and_other_overhead_seconds": 27.199941,
+          "total_wall_seconds_estimate": 443.44148098401735
+        },
+        "optical_convergence_verified": false
+      }
+    ],
+    "interpretation_limits": [
+      "40 nm 均匀网格在 Si 中约 3.2 点/波长，仅适合粗性能测试，不代表物理精度已足够。",
+      "100 fs 试跑禁用自动终止用于测量性能；完成不代表场充分衰减，不是网格或时长收敛。",
+      "正式配置 1 ps 是最大物理时长，auto shutoff 1e-5 可能提前结束；物理时长与墙钟时间不同。",
+      "Gaussian 时间脉冲中心为 532 nm、脉宽 20 fs，并非严格连续单频光源；DFT 仅记录 532 nm。",
+      "共形网格 checker 可能低估实际内存。推荐内存是各阶段峰值，不把运行、初始化、收集要求相加。",
+      "表面局部网格需要过渡与材料自动细化，远场网格并非可以任意粗化；只有性能试跑档位实际分配网格并运行，其余档位仍是检查器估计。",
+      "T 位于 Si 内，表示该截面剩余通量，不是晶圆背面透射率。",
+      "内存可容纳与运行时间可接受，都不能替代光学网格、PML、时长收敛验证。"
+    ]
+  }
+}

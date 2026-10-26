@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-26",
+  "status": "passed",
+  "scope": "HTML, local references, interactive teaching examples, evidence consistency and public-package review; not new electromagnetic validation",
+  "static_checks": {
+    "html_ids_unique": 184,
+    "embedded_images": 8,
+    "local_link_checks": 29,
+    "json_files_checked": 8,
+    "missing_targets": 0,
+    "unbalanced_html_tags": 0,
+    "reference_sources_after_deduplication": 51
+  },
+  "browser_checks": {
+    "browser": "Chromium through Playwright CLI",
+    "served_locally": true,
+    "desktop_viewport": [1440, 1100],
+    "mobile_viewport": [390, 844],
+    "horizontal_document_overflow": false,
+    "all_8_images_decoded": true,
+    "tutorial_page_console_errors": 0,
+    "boundary_grid_selector_and_reset": "passed",
+    "boundary_0_to_10nm_translation_changes_output": true,
+    "resource_40nm_work_ratio_equals_one": true,
+    "phase_1nm_degrees": 0.225,
+    "phase_0_1nm_degrees": 0.0225,
+    "mobile_navigation_expands": true,
+    "original_figures_visually_reviewed": true,
+    "note": "Opening an SVG alone requested a nonexistent favicon; the tutorial itself declares a data favicon and had no console errors. Browser screenshots are local QA artifacts, excluded from the public package."
+  },
+  "independent_content_review": {
+    "geometry_vs_optical_error_distinguished": true,
+    "wafer_export_vs_standalone_vdata_distinguished": true,
+    "full_domain_vs_crop_storage_comparison_checked": true,
+    "cpu_cad_memory_vs_solver_memory_distinguished": true,
+    "checker_vs_short_pilot_vs_1ps_extrapolation_distinguished": true,
+    "historical_2d_meep_result_scope_corrected": true,
+    "cmt_and_dispersion_primary_sources_checked": true,
+    "ten_nm_budget_marked_proposed": true
+  },
+  "publication_package": {
+    "visibility_authorized": "public",
+    "supplier_manuals_sdk_licenses_or_large_models_included": false,
+    "credentials_or_private_key_patterns_found": false,
+    "evidence_sources_use_named_relative_roots": true
+  },
+  "new_electromagnetic_simulations_run": false
+}

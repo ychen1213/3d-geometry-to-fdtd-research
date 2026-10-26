@@ -1,0 +1,142 @@
+[
+  {
+    "id": "fdtd-solver-ansys",
+    "title": "Ansys: Finite Difference Time Domain (FDTD) solver introduction",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034914633-Finite-Difference-Time-Domain-FDTD-solver-introduction",
+    "claim": "FDTD 使用笛卡尔 Yee 网格；六个场分量在空间交错，导入几何不等于计算网格。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-plic-scardovelli",
+    "title": "Scardovelli & Zaleski (2000): Analytical Relations Connecting Linear Interfaces and Volume Fractions in Rectangular Grids",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0021999100965677",
+    "claim": "已知平面法向时，界面位置与体积分数之间可以进行几何求解；单个分数不唯一规定界面。这里只依据可访问的论文摘要介绍该问题范围。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-subpixel-farjadpour",
+    "title": "Farjadpour et al. (2006): Improving accuracy by subpixel smoothing in the finite-difference time domain",
+    "url": "https://opg.optica.org/ol/abstract.cfm?uri=ol-31-20-2972",
+    "claim": "合理设计的亚像素平滑可改善倾斜介质界面离散误差；锐角另有收敛困难。作者可访问论文版本用于核对公式背景。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-subpixel-farjadpour-author",
+    "title": "Farjadpour et al. (2006): Improving accuracy by sub-pixel smoothing in FDTD — author-hosted SPIE version",
+    "url": "https://math.mit.edu/~stevenj/papers/FarjadpourRo06-SPIE.pdf",
+    "claim": "与期刊论文同一研究线的作者公开版本，讨论基于微扰理论的亚像素平均、界面与角点误差；不作为第二份独立证据重复计权。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-tensor-kottke",
+    "title": "Kottke, Farjadpour & Johnson (2008): Perturbation theory for anisotropic dielectric interfaces, and application to subpixel smoothing of discretized numerical methods",
+    "url": "https://journals.aps.org/pre/abstract/10.1103/PhysRevE.77.036611",
+    "claim": "界面平均应考虑连续场分量及方向；各向异性界面的处理不能简化为任意标量平均。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-tensor-kottke-author",
+    "title": "Kottke et al. (2008): author-hosted full paper",
+    "url": "https://math.mit.edu/~stevenj/papers/KottkeFa08.pdf",
+    "claim": "核对局部平面界面法向谐均值、切向算术均值与一般各向异性扩展的理论；与APS条目同一来源。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-materials-meep",
+    "title": "Meep Documentation: Materials",
+    "url": "https://meep.readthedocs.io/en/latest/Materials/",
+    "claim": "色散通过极化辅助状态推进；n,k 需要适合时域的响应模型；极化项增加内存与时间。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-subpixel-meep",
+    "title": "Meep Documentation: Subpixel Smoothing",
+    "url": "https://meep.readthedocs.io/en/latest/Subpixel_Smoothing/",
+    "claim": "当前亚像素平滑只处理瞬时材料部分；局部平面、锐角及材料函数性能有适用限制，不能自动保证色散Si界面二阶收敛。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-cmt-options",
+    "title": "Ansys: Selecting the best mesh refinement option in the FDTD simulation object",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034382614-Selecting-the-best-mesh-refinement-option-in-the-FDTD-simulation-object",
+    "claim": "CMT可处理两种色散介质界面；多于两材料的单元会回退阶梯；variant对金属和PEC的策略不同。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-stl-import",
+    "title": "Ansys: STL import — Simulation object",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034901953-STL-import-Simulation-object",
+    "claim": "STL导入后作为planar solid；文件不携带长度单位；多材料需要相应对象；面片数影响加载显示。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-binary-object",
+    "title": "Ansys: Binary spatial data — Simulation object",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034382754-Binary-spatial-data-Simulation-object",
+    "claim": "二值数据经插值和Binary Threshold定义边界；默认阈值0.5；应通过index monitor检查实际边界。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-importbinary2",
+    "title": "Ansys: importbinary2 — Script command",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034929013-importbinary2-Script-command",
+    "claim": "输入是0/1三维数组及均匀坐标，任意非零值解释为1；不能直接保留原始体积分数。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-nk-import",
+    "title": "Ansys: Spatial (n,k) data — Simulation object",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034901993-Spatial-n-k-data-Simulation-object",
+    "claim": "Spatial n,k 导入针对单频空间数据；这与用二值几何对象分配色散材料是不同路线。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-cmt-scaling",
+    "title": "Ansys: Understanding Mesh Refinement and Conformal Mesh in FDTD",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360034382594-Understanding-Mesh-Refinement-and-Conformal-Mesh-in-FDTD",
+    "claim": "官方共形实现包含专有修改；固定三维问题均匀缩放时内存约h^-3、推进时间约h^-4。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-flaport",
+    "title": "flaport/fdtd official repository",
+    "url": "https://github.com/flaport/fdtd",
+    "claim": "上游库提供三维及可选PyTorch/GPU后端，NumPy默认为float64；本机适配器固定NumPy和二维是应用层现状。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-hdf5-chunks",
+    "title": "HDF Group: Chunking in HDF5",
+    "url": "https://portal.hdfgroup.org/documentation/hdf5/latest/hdf5_chunking.html",
+    "claim": "分块存储可配合局部读取及压缩；此为几何存储方案，不意味着动态场数组能够免除。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-cuda-memory",
+    "title": "NVIDIA: CUDA C++ Best Practices Guide",
+    "url": "https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/",
+    "claim": "GPU实现应考虑合并访存和减少主机设备传输；不据通用指南承诺本项目加速倍数。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-memory-check",
+    "title": "Ansys: Running FDTD simulations from the design environment",
+    "url": "https://optics.ansys.com/hc/en-us/articles/360046368573-Running-FDTD-simulations-from-the-design-environment",
+    "claim": "CPU/GPU内存估计不同；GPU任务仍需主机RAM；实际峰值需日志核对。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-pml-meep",
+    "title": "Meep Documentation: Perfectly Matched Layers",
+    "url": "https://meep.readthedocs.io/en/latest/Perfectly_Matched_Layer/",
+    "claim": "PML是人工吸收层，须检验厚度和域范围；物理监视量应取自PML外部。",
+    "accessed": "2026-10-26"
+  },
+  {
+    "id": "fdtd-gpu-ansys",
+    "title": "Ansys: Getting started with running FDTD on GPU",
+    "url": "https://optics.ansys.com/hc/en-us/articles/17518942465811-Getting-started-with-running-FDTD-on-GPU",
+    "claim": "GPU求解与CPU上的网格、脚本等步骤需要区分；不把CPU历史性能外推成未经测量的GPU承诺。",
+    "accessed": "2026-10-26"
+  }
+]

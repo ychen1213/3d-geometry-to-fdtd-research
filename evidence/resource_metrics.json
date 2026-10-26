@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "assembled_date": "2026-10-26",
+  "source_project_relative_path": "AH53_FDTD_RunStudy/results.json",
+  "source_sha256": "17ae4e0c02639d29d181927234ace41b22ffb6177b2f380f709b2e232eec3fe0",
+  "original_generated_at_hong_kong": "2026-10-25T01:24:08.101106+08:00",
+  "note": "Historical evidence only. Checker estimates and 100 fs pilots are not optical convergence or position-accuracy validation.",
+  "hardware_snapshot": {
+    "cpu": "AMD Ryzen 7 H 260 w/ Radeon 780M Graphics",
+    "physical_cores": 8,
+    "logical_processors": 16,
+    "ram_total_bytes": 33602605056,
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "gpu_memory_total_mib": 8151
+  },
+  "setup": {
+    "wavelength_nm": 532,
+    "geometry": "QEM45 from independently imported VDATA",
+    "illumination": "Gaussian, waist 3 um, normal -Z, X polarization",
+    "domain_um": [
+      15.2,
+      27.2,
+      3.3
+    ],
+    "solver": "Lumerical CPU, 8 threads",
+    "target_max_time_ps": 1,
+    "optical_convergence_verified": false
+  },
+  "cases": [
+    {
+      "case": "uniform_60nm",
+      "requested_step_nm": 60,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 1084882632.0,
+      "yee_nodes_million": 10.4978,
+      "dt_fs": 0.11423821794165552,
+      "runtime_classification": "same_mesh_pilot_extrapolation",
+      "same_grid_1ps_wall_seconds_estimate": 443.44148098401735,
+      "cross_grid_propagation_seconds_range": null,
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_40nm",
+      "requested_step_nm": 40,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 2998620648.0,
+      "yee_nodes_million": 30.4325,
+      "dt_fs": 0.07610892937822819,
+      "runtime_classification": "same_mesh_pilot_extrapolation",
+      "same_grid_1ps_wall_seconds_estimate": 1678.746645674106,
+      "cross_grid_propagation_seconds_range": null,
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_30nm",
+      "requested_step_nm": 30,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 6436568544.0,
+      "yee_nodes_million": 66.2444,
+      "dt_fs": 0.057177697975105995,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        3102.8223731587345,
+        10496.053280797558
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_20nm",
+      "requested_step_nm": 20,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 19764382968.0,
+      "yee_nodes_million": 205.076,
+      "dt_fs": 0.0381314973906176,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        14403.393599839206,
+        48722.9910277809
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_15nm",
+      "requested_step_nm": 15,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 44766483072.0,
+      "yee_nodes_million": 465.514,
+      "dt_fs": 0.028588848987547606,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        43607.186776369956,
+        147511.94260743927
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_10nm",
+      "requested_step_nm": 10,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 144058417968.0,
+      "yee_nodes_million": 1499.8,
+      "dt_fs": 0.01906574869530557,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        210671.14507627874,
+        712646.5190452371
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_5nm",
+      "requested_step_nm": 5,
+      "graded": false,
+      "classification": "checker_estimate",
+      "recommended_bytes": 1099404017568.0,
+      "yee_nodes_million": 11451.3,
+      "dt_fs": 0.009532874347651706,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        3217009.583081478,
+        10882319.362189326
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "graded_surface_20nm",
+      "requested_step_nm": 20,
+      "graded": true,
+      "classification": "checker_estimate",
+      "recommended_bytes": 13484622624.0,
+      "yee_nodes_million": 139.661,
+      "dt_fs": 0.036705397744961364,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        10189.759946853439,
+        34469.347728671644
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "graded_surface_10nm",
+      "requested_step_nm": 10,
+      "graded": true,
+      "classification": "checker_estimate",
+      "recommended_bytes": 49671927408.0,
+      "yee_nodes_million": 516.612,
+      "dt_fs": 0.019065748694070517,
+      "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+      "same_grid_1ps_wall_seconds_estimate": null,
+      "cross_grid_propagation_seconds_range": [
+        72566.50326719997,
+        245473.89218362316
+      ],
+      "actual_full_1ps_run": false,
+      "optical_convergence_verified": false
+    }
+  ],
+  "pilots": [
+    {
+      "case": "uniform_40nm",
+      "classification": "actual_short_pilot",
+      "physical_time_fs": 100.0071,
+      "wall_seconds": 233.72428690001834,
+      "peak_engine_reported_bytes": 3532387263,
+      "peak_label": "Peak CPU memory used by end of meshing",
+      "initialization_seconds": 65.10594,
+      "solve_seconds": 160.635807,
+      "clean_completed": true,
+      "optical_convergence_verified": false
+    },
+    {
+      "case": "uniform_60nm",
+      "classification": "actual_short_pilot",
+      "physical_time_fs": 99.95844,
+      "wall_seconds": 70.3353903000243,
+      "peak_engine_reported_bytes": 1386993116,
+      "peak_label": "Peak CPU memory used by end of meshing",
+      "initialization_seconds": 22.896062,
+      "solve_seconds": 41.606855,
+      "clean_completed": true,
+      "optical_convergence_verified": false
+    }
+  ]
+}

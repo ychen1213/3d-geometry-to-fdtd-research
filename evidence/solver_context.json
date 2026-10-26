@@ -1,0 +1,481 @@
+{
+  "schema_version": 1,
+  "researched_on": "2026-10-26",
+  "timezone": "Asia/Hong_Kong",
+  "purpose": "Engineering choice of geometry representations for process-derived alignment marks and self-developed FDTD",
+  "new_electromagnetic_runs_in_this_research": false,
+  "evidence_method": "Read-only inspection of local source code, documents and existing JSON reports; no rerun of historical experiments",
+  "user_confirmed_targets": {
+    "primary_position_bias_nm": 10,
+    "secondary_tiers_nm": [
+      1,
+      0.1
+    ],
+    "workstation_upgrade_allowed": true,
+    "compare_existing_upgrade_and_new_3d_architecture": true,
+    "target_status": "Design goals, not achieved or certified accuracy"
+  },
+  "branch_inventory": [
+    {
+      "name": "MarkSim",
+      "path": "workspace/MarkSim",
+      "backend": "WSL Meep application adapter",
+      "formal_scope": "2D periodic normal-incidence Jones workflow; ideal self-reference and harmonic position readout",
+      "verified_code": [
+        "src/marksim/meep_backend.py:157 dimensions=2",
+        "src/marksim/metrics.py harmonic least-squares",
+        "scripts/validate_3d_smoke.py:58-60 material_function, eps_averaging=False"
+      ],
+      "three_dimensional_evidence": "Tiny lossless voxel and Block/Prism actual smoke records; no formal generic 3D Jones/readout",
+      "limitations_are_application_scope_not_upstream_library_limits": true
+    },
+    {
+      "name": "MarkSimFDTD",
+      "path": "workspace/MarkSimFDTD",
+      "backend": "flaport/fdtd 0.3.5 NumPy CPU",
+      "verified_code": [
+        "src/marksim/native_fdtd/engine.py:132 fdtd.set_backend(numpy)",
+        "src/marksim/native_fdtd/engine.py:134 grid shape (nx+1,nz,1)",
+        "src/marksim/native_fdtd/engine.py:87-97 exact-interface harmonic/tangential averaging",
+        "src/marksim/native_fdtd/engine.py:103-107 lossy/PML restrictions"
+      ],
+      "formal_scope": "2D periodic rectangles, normal incidence, isotropic media",
+      "not_implemented_or_not_validated": [
+        "generic 3D process geometry",
+        "general subpixel volume fitting",
+        "Drude/Lorentz or broad-band fitted dispersion",
+        "lossy medium overlapping PML",
+        "position/optics module in this branch"
+      ],
+      "limitations_are_application_scope_not_upstream_library_limits": true
+    },
+    {
+      "name": "FDTD-core-reconstruction",
+      "path": "workspace/FDTD-core-reconstruction",
+      "inspection": "Shallow listing then forced depth-3 listing and rg --files --hidden",
+      "observed_entries": [
+        ".tools",
+        ".tools/downloads"
+      ],
+      "verified_solver_source": false,
+      "limit": "No source or README found within this inspected directory; no claim about all other locations"
+    }
+  ],
+  "historical_position_validation": {
+    "source": "workspace/MarkSim/docs/stage_results.md:30-31",
+    "method": "independent FDTD after actual geometry translation",
+    "resolution_per_um": 36,
+    "known_shift_nm": 100,
+    "reported_recovered_shift_nm": 98.52,
+    "approximate_bias_nm": -1.48,
+    "classification": "historical documented result, no new HDF5 recomputation",
+    "limit": "Approximately -1.48 nm applies only to the documented 36 points/um, 2D periodic, independently rerun +100 nm geometry translation case. It is not a general 3D or instrument accuracy statement; analytical phase multiplication tests are distinct.",
+    "physical_dimension": 2,
+    "geometry_scope": "Periodic structure uniform along the stripe direction; not a finite three-dimensional nonideal Mark"
+  },
+  "historical_reference_quality": {
+    "source": "workspace/FDTD_Lumerical_Benchmarks/README_zh.md",
+    "reference_self_convergence_target": 0.001,
+    "strict_passed_parameter_points": 4,
+    "total_parameter_points": 26,
+    "limit": "Not a position error threshold; failed reference points are diagnostic only",
+    "reference_self_convergence_quantity": "Complex reflection coefficient reference self-convergence; not a 10 nm position acceptance test"
+  },
+  "source_geometry": {
+    "source_path": "CoventorProjects/AH53_Si_300nm_Nonideal/AH53_Si_300nm_Nonideal.vdata",
+    "source_sha256": "66da134572910aa2bcf704399ad6d2fd7cdf87154154a7c8196f214609b13292",
+    "voxel_size_um": 0.02,
+    "dimensions_xyz": [
+      800,
+      1400,
+      50
+    ],
+    "voxel_count": 56000000,
+    "has_plane_equations": false,
+    "stl_units": "um",
+    "stl_coordinates": "local; world = local + translation_um",
+    "translation_um": [
+      16.0,
+      -14.0,
+      -0.5
+    ],
+    "surface_audit": {
+      "triangles": 174966,
+      "vertices": 87485,
+      "closed_edges_all_two": true,
+      "degenerate_triangles": 0,
+      "inconsistent_edges": 0,
+      "orientation_flipped": false,
+      "local_bounds_um": [
+        [
+          -0.0006282573449425399,
+          -0.0006299449014477432,
+          -0.002509803744032979
+        ],
+        [
+          16.000629425048828,
+          28.000629425048828,
+          1.0001914501190186
+        ]
+      ],
+      "mesh_volume_um3": 348.24846776971475,
+      "native_volume_um3": 347.31284893750006,
+      "volume_difference_percent": 0.26938791210200375,
+      "stl_bytes": 8748384,
+      "limit": "Closure and volume checks do not certify every surface point or optical accuracy."
+    },
+    "fraction_only_reconstruction_comparison": {
+      "converter_used_original_wafer": false,
+      "reference_used_only_after_conversion": true,
+      "source_has_plane_equations": false,
+      "valid_sample_count": 630,
+      "lateral_error_vs_original_native_nm": {
+        "mean_signed_nm": 0.003901599700378756,
+        "rms_nm": 1.611585103771566,
+        "mean_abs_nm": 0.8940645274071599,
+        "p95_abs_nm": 4.0883558204651385,
+        "max_abs_nm": 6.680452281912608,
+        "min_nm": -6.680452281912608,
+        "max_nm": 4.599799576066488
+      },
+      "limitation": "A fraction-only VDATA cannot uniquely specify its original within-cell interface; this comparison includes missing-information and meshing errors."
+    },
+    "limit": "Surface export and missing within-cell planes create approximations; geometric errors are not position-readout errors"
+  },
+  "historical_resource_study": {
+    "source": "CoventorProjects/AH53_FDTD_RunStudy/results.json",
+    "generated_at_hong_kong": "2026-10-25T01:24:08.101106+08:00",
+    "source_geometry_project": "CoventorProjects/VDATA_Optimization/storage/qem_045p0.fsp",
+    "hardware_snapshot": {
+      "cpu": "AMD Ryzen 7 H 260 w/ Radeon 780M Graphics",
+      "physical_cores": 8,
+      "logical_processors": 16,
+      "ram_total_bytes": 33602605056,
+      "os_total_visible_memory_kib": 32815044,
+      "os_available_memory_kib_at_query": 9771744,
+      "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+      "gpu_memory_total_mib": 8151,
+      "gpu_memory_free_mib_at_query": 4182,
+      "gpu_driver": "577.05",
+      "gpu_compute_capability": "12.0",
+      "other_video_adapters": [
+        "AMD Radeon 780M Graphics",
+        "OrayIddDriver Device"
+      ],
+      "note": "Free memory is a momentary snapshot; recheck before every case. GPU hardware presence does not establish Lumerical v252 compatibility. CPU is the recommended first study configuration."
+    },
+    "comparison_cpu_threads": 8,
+    "illumination": {
+      "direction": "-Z",
+      "polarization": "X",
+      "waist_radius_um": 3.0,
+      "waist_z_um": 1.0,
+      "theta_deg": 0.0,
+      "center_x_um": 24.0,
+      "center_y_um": 0.0
+    },
+    "wavelength_nm": 532.0,
+    "cases": [
+      {
+        "case": "uniform_60nm",
+        "requested_step_nm": 60,
+        "yee_nodes_million": 10.4978,
+        "recommended_memory": {
+          "bytes": 1084882632.0,
+          "GB": 1.084882632,
+          "GiB": 1.0103756859898567
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "same_mesh_pilot_extrapolation",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_40nm",
+        "requested_step_nm": 40,
+        "yee_nodes_million": 30.4325,
+        "recommended_memory": {
+          "bytes": 2998620648.0,
+          "GB": 2.998620648,
+          "GiB": 2.7926831021904945
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "same_mesh_pilot_extrapolation",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_30nm",
+        "requested_step_nm": 30,
+        "yee_nodes_million": 66.2444,
+        "recommended_memory": {
+          "bytes": 6436568544.0,
+          "GB": 6.436568544,
+          "GiB": 5.994521588087082
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_20nm",
+        "requested_step_nm": 20,
+        "yee_nodes_million": 205.076,
+        "recommended_memory": {
+          "bytes": 19764382968.0,
+          "GB": 19.764382968,
+          "GiB": 18.407016031444073
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_15nm",
+        "requested_step_nm": 15,
+        "yee_nodes_million": 465.514,
+        "recommended_memory": {
+          "bytes": 44766483072.0,
+          "GB": 44.766483072,
+          "GiB": 41.692036271095276
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_10nm",
+        "requested_step_nm": 10,
+        "yee_nodes_million": 1499.8,
+        "recommended_memory": {
+          "bytes": 144058417968.0,
+          "GB": 144.058417968,
+          "GiB": 134.16485671699047
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "uniform_5nm",
+        "requested_step_nm": 5,
+        "yee_nodes_million": 11451.3,
+        "recommended_memory": {
+          "bytes": 1099404017568.0,
+          "GB": 1099.404017568,
+          "GiB": 1023.8997801840305
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "graded_surface_20nm",
+        "requested_step_nm": 20,
+        "yee_nodes_million": 139.661,
+        "recommended_memory": {
+          "bytes": 13484622624.0,
+          "GB": 13.484622624,
+          "GiB": 12.55853345990181
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      },
+      {
+        "case": "graded_surface_10nm",
+        "requested_step_nm": 10,
+        "yee_nodes_million": 516.612,
+        "recommended_memory": {
+          "bytes": 49671927408.0,
+          "GB": 49.671927408,
+          "GiB": 46.26058731973171
+        },
+        "classification": "checker_estimate",
+        "runtime_classification": "cross_mesh_propagation_sensitivity_range",
+        "actual_full_1ps_run": false,
+        "optical_convergence_verified": false
+      }
+    ],
+    "pilots": [
+      {
+        "case": "uniform_40nm",
+        "classification": "historical_measured_100fs_pilot",
+        "device": "CPU",
+        "threads": 8,
+        "api_wall_seconds": 233.72428690001834,
+        "engine_wall_seconds": {
+          "overall": 233.138478,
+          "initialization": 65.10594,
+          "solve": 160.635807,
+          "checkpoint": 0.0,
+          "finalize_and_save": 2.99794,
+          "miscellaneous": 4.398739
+        },
+        "peak_memory_bytes": 3532387263,
+        "grid_dimensions": [
+          404,
+          704,
+          107
+        ],
+        "gridpoints": 30432512,
+        "physical_time_seconds": 1.000071e-13,
+        "one_ps_prediction": {
+          "target_maximum_physical_time_seconds": 1e-12,
+          "dt_from_completed_iteration_report_seconds": 7.610890410958904e-17,
+          "predicted_iterations": 13140,
+          "assumption": "Same mesh, materials, sources and monitors; no early auto shutoff. Extrapolation is a runtime estimate, not a completed 1 ps solve or an optical convergence result.",
+          "propagation_wall_seconds_by_time_ratio": 1606.244026674106,
+          "propagation_wall_seconds_by_grid_work": 1606.358072684163,
+          "measured_initialization_and_other_overhead_seconds": 72.50261900000001,
+          "total_wall_seconds_estimate": 1678.746645674106
+        },
+        "optical_convergence_verified": false,
+        "source_result_path": "CoventorProjects/AH53_FDTD_RunStudy/benchmarks/uniform_40nm/cpu8/benchmark_result.json"
+      },
+      {
+        "case": "uniform_60nm",
+        "classification": "historical_measured_100fs_pilot",
+        "device": "CPU",
+        "threads": 8,
+        "api_wall_seconds": 70.3353903000243,
+        "engine_wall_seconds": {
+          "overall": 68.806844,
+          "initialization": 22.896062,
+          "solve": 41.606855,
+          "checkpoint": 0.0,
+          "finalize_and_save": 1.631281,
+          "miscellaneous": 2.672598
+        },
+        "peak_memory_bytes": 1386993116,
+        "grid_dimensions": [
+          278,
+          478,
+          79
+        ],
+        "gridpoints": 10497836,
+        "physical_time_seconds": 9.995844e-14,
+        "one_ps_prediction": {
+          "target_maximum_physical_time_seconds": 1e-12,
+          "dt_from_completed_iteration_report_seconds": 1.1423821714285714e-16,
+          "predicted_iterations": 8754,
+          "assumption": "Same mesh, materials, sources and monitors; no early auto shutoff. Extrapolation is a runtime estimate, not a completed 1 ps solve or an optical convergence result.",
+          "propagation_wall_seconds_by_time_ratio": 416.2415399840173,
+          "propagation_wall_seconds_by_grid_work": 416.2587509337144,
+          "measured_initialization_and_other_overhead_seconds": 27.199941,
+          "total_wall_seconds_estimate": 443.44148098401735
+        },
+        "optical_convergence_verified": false,
+        "source_result_path": "CoventorProjects/AH53_FDTD_RunStudy/benchmarks/uniform_60nm/cpu8/benchmark_result.json"
+      }
+    ],
+    "material_at_532nm": {
+      "library_n": 4.1501040188082685,
+      "library_k": 0.04393515056151286,
+      "fdtd_fit_n": 4.149922057967753,
+      "fdtd_fit_k": 0.04818235573676564,
+      "delta_n": -0.0001819608405151385,
+      "delta_k": 0.0042472051752527745
+    },
+    "interpretation_limits": [
+      "40 nm 均匀网格在 Si 中约 3.2 点/波长，仅适合粗性能测试，不代表物理精度已足够。",
+      "100 fs 试跑禁用自动终止用于测量性能；完成不代表场充分衰减，不是网格或时长收敛。",
+      "正式配置 1 ps 是最大物理时长，auto shutoff 1e-5 可能提前结束；物理时长与墙钟时间不同。",
+      "Gaussian 时间脉冲中心为 532 nm、脉宽 20 fs，并非严格连续单频光源；DFT 仅记录 532 nm。",
+      "共形网格 checker 可能低估实际内存。推荐内存是各阶段峰值，不把运行、初始化、收集要求相加。",
+      "表面局部网格需要过渡与材料自动细化，远场网格并非可以任意粗化；只有性能试跑档位实际分配网格并运行，其余档位仍是检查器估计。",
+      "T 位于 Si 内，表示该截面剩余通量，不是晶圆背面透射率。",
+      "内存可容纳与运行时间可接受，都不能替代光学网格、PML、时长收敛验证。"
+    ]
+  },
+  "proposed_position_budget_nm": {
+    "status": "proposed allocation, not measured or proven bounds",
+    "geometry_reconstruction": 2,
+    "optional_decimation": 1,
+    "interface_and_spatial_grid": 3,
+    "time_pml_domain": 1,
+    "material_numerical_fit": 1,
+    "field_extraction_readout_precision": 1,
+    "reserve": 1,
+    "total": 10,
+    "meaning": "All terms refer to end-to-end readout changes, not geometric distance errors; physical process and measurement uncertainty remain separate"
+  },
+  "source_file_hashes": [
+    {
+      "path": "CoventorProjects/AH53_FDTD_RunStudy/results.json",
+      "sha256": "17ae4e0c02639d29d181927234ace41b22ffb6177b2f380f709b2e232eec3fe0",
+      "bytes": 77166
+    },
+    {
+      "path": "CoventorProjects/VDATA_Converter/outputs/AH53_from_vdata/conversion_manifest.json",
+      "sha256": "c5095148deb98e807194092e958142befa066450392741c2eaa015dfcdf398e7",
+      "bytes": 4455
+    },
+    {
+      "path": "CoventorProjects/VDATA_Converter/outputs/AH53_from_vdata/information_loss_check.json",
+      "sha256": "37b16b7927813943472de00352d75e44d73098f48a5cdf934182e54474cf7dd4",
+      "bytes": 646
+    },
+    {
+      "path": "workspace/MarkSim/README_MarkSim.md",
+      "sha256": "d2dac8075eb9c9a6478ff6369ccc57f74b2266551da212221fba5d026e0ac6f7",
+      "bytes": 10956
+    },
+    {
+      "path": "workspace/MarkSim/src/marksim/meep_backend.py",
+      "sha256": "d53f0f3768dcebec000772c31e9b048d00c9859593a98e6f771eb5cbdd0ce6e9",
+      "bytes": 20675
+    },
+    {
+      "path": "workspace/MarkSim/scripts/validate_3d_smoke.py",
+      "sha256": "0e02423bf58701761f6e7a73eaa8259c1a91227dadb64b32d3a2719cdefb629f",
+      "bytes": 10423
+    },
+    {
+      "path": "workspace/MarkSim/src/marksim/voxel.py",
+      "sha256": "5f6bfc088e318fda762c023bb75314cd0c8136c47de0d293f19721085481cb9f",
+      "bytes": 17669
+    },
+    {
+      "path": "workspace/MarkSim/docs/optics_and_metrics.md",
+      "sha256": "057d27bd5434c2ee511d3ccf46f9e2ee67db83d3167893d6ecc314adfc9c646c",
+      "bytes": 6521
+    },
+    {
+      "path": "workspace/MarkSim/docs/stage_results.md",
+      "sha256": "9d2073ee0d8723eae266063cac3c40646b47d4a3103d8713c69871f1eaa25ede",
+      "bytes": 12050
+    },
+    {
+      "path": "workspace/MarkSimFDTD/README.md",
+      "sha256": "8c64b0682b1c6fe46822bf16c572bcddb34553b43b3af3fb989a42004471d183",
+      "bytes": 6038
+    },
+    {
+      "path": "workspace/MarkSimFDTD/src/marksim/native_fdtd/engine.py",
+      "sha256": "950b4ef6240fc0119272254d64698a4955b167456c9f7980da52a00d1e9fdd4e",
+      "bytes": 10905
+    },
+    {
+      "path": "workspace/MarkSimFDTD/docs/native_fdtd_physics.md",
+      "sha256": "4b85ef6b82caed9d24bea25e2417aa8405311a29d6bfff4432f33d5ba4303015",
+      "bytes": 9623
+    },
+    {
+      "path": "workspace/FDTD_Lumerical_Benchmarks/README_zh.md",
+      "sha256": "c3b05769590092a1542cabe7bc2215f38bd8543b5a1e64603a4763903dcf0a15",
+      "bytes": 11234
+    }
+  ],
+  "source_path_convention": {
+    "workspace": "Named root for the original working-project directory; absolute machine location omitted",
+    "CoventorProjects": "Named root for the original Coventor project directory; absolute machine location omitted",
+    "hashes": "SHA-256 values refer to unchanged local source files; only path strings in this evidence summary were normalized"
+  }
+}

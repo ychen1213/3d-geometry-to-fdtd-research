@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 500" role="img" aria-labelledby="title desc">
+<title id="title">三维结构的四个层次</title><desc id="desc">几何决定材料边界在哪里，容器编码决定怎样保存，物理材料决定对光的响应，求解离散决定未知量与更新方法。作者自主绘制的概念图。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker></defs>
+<rect width="1120" height="500" rx="18" fill="#f5f8fc"/>
+<g font-family="Segoe UI, Microsoft YaHei, sans-serif" fill="#183147">
+<text x="36" y="45" font-size="26" font-weight="700">一份三维模型，四类不同的问题</text>
+<g transform="translate(35 76)"><rect width="490" height="160" rx="14" fill="#e2f2ff" stroke="#7cb6db"/><text x="24" y="35" font-size="23" font-weight="700">① 几何表示：哪里是硅？</text><text x="24" y="74" font-size="19">三角形 / CAD 曲面 / 体素 / 距离场</text><text x="24" y="108" font-size="18">决定边界、内部与拓扑；需要单位和坐标</text><text x="24" y="140" font-size="17" fill="#44647a">同一个形状可以有多种表达</text></g>
+<g transform="translate(595 76)"><rect width="490" height="160" rx="14" fill="#fff1d6" stroke="#e0bd69"/><text x="24" y="35" font-size="23" font-weight="700">② 文件编码：怎样写进磁盘？</text><text x="24" y="74" font-size="19">STL / OBJ / HDF5 / 压缩 / 分块</text><text x="24" y="108" font-size="18">决定字段、字节布局与读写方式</text><text x="24" y="140" font-size="17" fill="#7a673b">压缩还原记录，不补回已经丢掉的形状</text></g>
+<g transform="translate(35 290)"><rect width="490" height="160" rx="14" fill="#e6f5ec" stroke="#83bd99"/><text x="24" y="35" font-size="23" font-weight="700">③ 物理材料：光怎样响应？</text><text x="24" y="74" font-size="19">材料编号 → ε(ω)、吸收、色散</text><text x="24" y="108" font-size="18">硅的几何区域需要绑定正确材料模型</text><text x="24" y="140" font-size="17" fill="#456f56">屏幕颜色和“金属感”不是介电函数</text></g>
+<g transform="translate(595 290)"><rect width="490" height="160" rx="14" fill="#eeebfa" stroke="#aa99d2"/><text x="24" y="35" font-size="23" font-weight="700">④ 求解离散：怎样算电磁场？</text><text x="24" y="74" font-size="19">Yee 差分 / 有限元 / DG 等</text><text x="24" y="108" font-size="18">决定场的位置、系数、时间步和内存</text><text x="24" y="140" font-size="17" fill="#67597f">表面三角形 ≠ FDTD 场的更新单元</text></g>
+<path d="M531 155H584M531 370H584M280 246V278M840 246V278" fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="36" y="482" font-size="15" fill="#607485">概念示意 · 自主绘制 · 各层通过明确定义的接口衔接</text>
+</g></svg>
